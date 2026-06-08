@@ -1,0 +1,23 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Run Server" type="UvRunConfigurationType" factoryName="UvRunConfigurationType">
+    <option name="args">
+      <list>
+        <option value="runserver" />
+      </list>
+    </option>
+    <option name="checkSync" value="true" />
+    <option name="env">
+      <map />
+    </option>
+    <option name="runType" value="SCRIPT" />
+    <option name="scriptOrModule" value="$PROJECT_DIR$/gaia_cob_pmp/manage.py" />
+    <option name="uvArgs">
+      <list>
+        <option value="--with" />
+        <option value="develop" />
+      </list>
+    </option>
+    <option name="uvSdkKey" value="uv (gaia-cob-pmp)" />
+    <method v="2" />
+  </configuration>
+</component>

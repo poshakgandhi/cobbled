@@ -1,0 +1,12 @@
+{# Base allauth form with a bootstrap spacer at the end, so the accounts/3rdparty page is neater #}
+{# https://github.com/pennersr/django-allauth/blob/main/allauth/templates/allauth/elements/form.html #}
+
+{% load allauth %}
+<form method="{{ attrs.method }}"
+      class="mb-4"
+      {% if attrs.action %}action="{{ attrs.action }}"{% endif %}>
+    {% slot body %}
+    {% endslot %}
+    {% slot actions %}
+    {% endslot %}
+</form>

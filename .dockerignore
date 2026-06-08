@@ -1,0 +1,6 @@
+.venv/
+.github/
+*.sqlite3
+deploy/
+*/media/
+*/logs/

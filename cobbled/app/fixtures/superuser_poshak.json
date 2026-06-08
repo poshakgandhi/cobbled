@@ -1,0 +1,28 @@
+[
+  {
+    "model": "auth.user",
+    "pk": 5,
+    "fields": {
+      "password": "pbkdf2_sha256$1200000$Tb4fORXTZrJGiDAANsMhJZ$CXl+Fsi2HkjfqbO3ITuJgxR8DNap6N8W+Bm3GFw/D1I=",
+      "last_login": null,
+      "is_superuser": true,
+      "username": "poshak.gandhi@soton.ac.uk",
+      "first_name": "Poshak",
+      "last_name": "Gandhi",
+      "email": "poshak.gandhi@soton.ac.uk",
+      "is_staff": true,
+      "is_active": true,
+      "date_joined": "2026-06-06T12:00:00Z",
+      "groups": [],
+      "user_permissions": []
+    }
+  },
+  {
+    "model": "app.researcher",
+    "pk": 5,
+    "fields": {
+      "affiliations": "University of Southampton",
+      "orcid": ""
+    }
+  }
+]

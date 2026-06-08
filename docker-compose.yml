@@ -1,0 +1,45 @@
+services:
+  # Not secured, as certificates are handled on Pandora.
+  nginx:
+    container_name: cobbled-nginx
+    image: nginx:latest
+    ports:
+      - "8888:8000"
+    volumes:
+      - type: bind
+        source: "./deploy/nginx/pandora.conf"
+        target: "/etc/nginx/conf.d/default.conf"
+      - type: bind
+        source: "./cobbled/logs/"
+        target: "/var/www/cobbled/cobbled/logs/"
+      - type: bind
+        source: "./cobbled/staticfiles/"
+        target: "/var/www/cobbled/cobbled/staticfiles/"
+    restart: unless-stopped
+    depends_on:
+      - web
+
+  web:
+    container_name: cobbled-web
+    build:
+      dockerfile: Dockerfile
+      context: .
+    ports:
+      - "8000:8000"
+    env_file:
+      - "./.env.default"
+      - "./.env"
+    volumes:
+      - type: bind
+        source: "./cobbled/media/uploads/"
+        target: "/var/www/cobbled/cobbled/media/uploads/"
+      - type: bind
+        source: "./cobbled/staticfiles/"
+        target: "/var/www/cobbled/cobbled/staticfiles/"
+      - type: bind
+        source: "./cobbled/logs/"
+        target: "/var/www/cobbled/cobbled/logs/"
+    command:
+      - "bash"
+      - "docker-entrypoint.sh"
+    restart: unless-stopped

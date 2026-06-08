@@ -1,10 +1,5 @@
-# Gaia Compact Object Binaries: Proposal Management Platform
+# Compact Object BBinary Live Experiments Database
 
-Demo project for the Iommi web framework
-
-[![Build Status](https://github.com/smangham/iommi-demo/actions/workflows/build.yaml/badge.svg?branch=main&event=push)](https://github.com/smangham/iommi-demo/actions/workflows/build.yaml)
-[![codecov](https://codecov.io/gh/smangham/iommi-demo/branch/main/graph/badge.svg)](https://codecov.io/gh/smangham/iommi-demo)
-[![License](https://img.shields.io/github/license/smangham/iommi-demo)](https://github.com/smangham/iommi-demo)
 
 ## Prerequisites
 

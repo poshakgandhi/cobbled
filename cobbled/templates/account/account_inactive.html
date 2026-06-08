@@ -1,0 +1,17 @@
+{# Taken from: #}
+{# https://github.com/pennersr/django-allauth/blob/main/allauth/templates/account/account_inactive.html #}
+
+{% extends "allauth/layouts/entrance.html" %}
+{% load i18n %}
+{% load allauth %}
+{% block head_title %}
+    {% translate "Account Inactive" %}
+{% endblock head_title %}
+{% block content %}
+    {% element h1 %}
+        Account Inactive
+    {% endelement %}
+    {% element p %}
+        Please wait for a member of site staff to activate your account.
+    {% endelement %}
+{% endblock content %}

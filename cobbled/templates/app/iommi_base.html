@@ -1,0 +1,28 @@
+{% extends "iommi/base.html" %}
+{% load static %}
+
+{# In case you need to modify it #}
+{# Blocks above and below the main are: iommi_top, iommi_bottom #}
+
+{% block iommi_head_contents_last %}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/custom.css' %}">
+{% endblock iommi_head_contents_last %}
+
+{% block iommi_top %}
+
+{% if messages %}
+{% for message in messages %}
+
+<div class="col col-md-auto" style="padding-top:10px;padding-bottom:0px">
+    <div class="alert {{message.tags}} d-flex align-items-center mb-5 alert-dismissible fade show" role="alert">
+        <div class=d-flex flex-column me-8><span>{{message}}</span></div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+</div>
+
+{% endfor %}
+{% endif %}
+{% endblock iommi_top %}
