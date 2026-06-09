@@ -6,7 +6,12 @@ from app.plots.rv_curve import get_rv_plot
 
 
 class FittingTestCase(TestCase):
-    fixtures = ["units.json", "zz_demo_data.json"]
+    fixtures = [
+        "units.json",
+        "zz_demo_data_part1.json",
+        "zz_demo_data_part2.json",
+        "zz_demo_data_part3.json",
+    ]
 
     def setUp(self):
         self.source = Source.objects.get(name="Test Source 2")

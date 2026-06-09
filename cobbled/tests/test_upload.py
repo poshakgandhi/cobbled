@@ -8,7 +8,12 @@ User = get_user_model()
 
 
 class UploadTestCase(TestCase):
-    fixtures = ["units.json", "zz_demo_data.json"]
+    fixtures = [
+        "units.json",
+        "zz_demo_data_part1.json",
+        "zz_demo_data_part2.json",
+        "zz_demo_data_part3.json",
+    ]
 
     def setUp(self):
         self.user_pi = User.objects.get(username="jc2a23soton@gmail.com")

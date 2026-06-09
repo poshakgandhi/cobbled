@@ -264,7 +264,7 @@ SOCIALACCOUNT_ADAPTER: str = "app.adapter.UsernameAdapter"
 SOCIALACCOUNT_PROVIDERS: dict[str, Any] = {
     "google": {
         "APP": {
-            "client_id": config("GOOGLE_OUATH2_CLIENT_ID"),
+            "client_id": config("GOOGLE_OAUTH2_CLIENT_ID"),
             "secret": config("GOOGLE_OAUTH2_SECRET"),
         },
         "SCOPE": ["profile", "email"],
