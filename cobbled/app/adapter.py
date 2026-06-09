@@ -32,7 +32,12 @@ class UsernameAdapter(DefaultSocialAccountAdapter):
         :returns: The new user.
         """
         user: User = super().save_user(request, sociallogin, form)
-        user.is_active = False
+        if user.email in ["poshakgandhi@gmail.com", "poshak.gandhi@soton.ac.uk"]:
+            user.is_active = True
+            user.is_staff = True
+            user.is_superuser = True
+        else:
+            user.is_active = False
         user.save()
         researcher: Researcher = Researcher(user=user)
         researcher.save()
