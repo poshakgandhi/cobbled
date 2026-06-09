@@ -1,23 +1,31 @@
+import json
 import numpy as np
 import plotly.graph_objects as go
 from core.settings import MEDIA_ROOT
-from numpy.lib.npyio import NpzFile
 from plotly.offline import plot
 
 from app.models import Source
 
 
-def load_vpec_gamma_data(source: Source) -> NpzFile:
+def load_vpec_gamma_data(source: Source) -> dict:
     try:
         source_id = source.gaiainfo.gaia_id
     except AttributeError:
         raise ValueError("No Gaia info for source")
-    in_path = f"{MEDIA_ROOT}/demo_data/{source_id}/{source_id}_vpec_vs_gamma.npz"
+    
+    json_path = f"{MEDIA_ROOT}/demo_data/{source_id}/{source_id}_vpec_vs_gamma.json"
     try:
-        data = np.load(in_path)
-        return data
+        with open(json_path, "r") as f:
+            data = json.load(f)
+        return {k: np.array(v) for k, v in data.items()}
     except FileNotFoundError:
-        raise ValueError("No vpecvsgamma file provided for source_id")
+        in_path = f"{MEDIA_ROOT}/demo_data/{source_id}/{source_id}_vpec_vs_gamma.npz"
+        try:
+            data = np.load(in_path)
+            return {k: data[k] for k in data.files}
+        except FileNotFoundError:
+            raise ValueError("No vpecvsgamma file provided for source_id")
+
 
 
 def get_vvg_plot(source: Source):
