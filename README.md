@@ -100,7 +100,7 @@ Finally, install the fixtures as a one-off command:
 
 ```
 sudo docker exec -it cobbled-web /bin/bash
-uv run manage.py loaddata app/fixtures/*.json
+uv run manage.py loaddata app/fixtures/*.json*
 exit
 ```
 

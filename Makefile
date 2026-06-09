@@ -110,7 +110,7 @@ setup:  ## Purge the existing DB and migrations, and create and apply new ones, 
 	djmanage makemigrations
 	djmanage migrate
 	djmanage collectstatic
-	djmanage loaddata cobbled/app/fixtures/*.json
+	djmanage loaddata cobbled/app/fixtures/*.json*
 
 server:  ## Run the server
 	djmanage runserver
