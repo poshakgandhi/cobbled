@@ -58,6 +58,7 @@ TEMPLATES: list[dict[str, Any]] = [
 ALLOWED_HOSTS: list[str] = [
     "localhost",
     "127.0.0.1",
+    ".hf.space",
     config("URL", default="gaia-cob.rsgsoton.net"),
 ]
 
@@ -148,6 +149,7 @@ SITE_ID: int = 1
 # https://docs.djangoproject.com/en/5.2/topics/logging/
 ################################################################################
 LOGS_ROOT: Path = BASE_DIR / "logs"
+LOGS_ROOT.mkdir(parents=True, exist_ok=True)
 LOGGING: dict[str, Any] = {
     "version": 1,  # the dictConfig format version
     "disable_existing_loggers": False,  # retain the default loggers
@@ -199,6 +201,7 @@ LOGGING: dict[str, Any] = {
 # https://docs.djangoproject.com/en/1.7/howto/static-files/
 ################################################################################
 MEDIA_ROOT: Path = BASE_DIR / "media"
+MEDIA_ROOT.mkdir(parents=True, exist_ok=True)
 MEDIA_URL: str = "/media/"
 
 STATIC_ROOT: Path = BASE_DIR / "static"

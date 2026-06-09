@@ -19,4 +19,8 @@ RUN uv run sync  # --extra develop; If you want to install the debug mode requir
 COPY .env* cobbled/.
 WORKDIR cobbled
 
+# Ensure all files are owned by UID 1000 for Hugging Face Spaces compatibility
+RUN chown -R 1000:1000 /var/www && chmod -R 775 /var/www
+
 ENTRYPOINT ["bash", "docker-entrypoint.sh"]
+
