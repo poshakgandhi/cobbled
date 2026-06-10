@@ -51,4 +51,4 @@ class UsernameAdapter(DefaultSocialAccountAdapter):
         :param socialacccount: The AllAuth social account link.
         :returns: The URL to redirect to.
         """
-        return "/inactive/"
+        return "/accounts/inactive/"

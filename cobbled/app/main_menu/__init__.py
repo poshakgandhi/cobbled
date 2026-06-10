@@ -50,6 +50,13 @@ main_menu = MainMenu(
             url="/accounts/login",
             view=EXTERNAL,
         ),
+        sign_out=M(
+            display_name="Sign Out",
+            icon="right-from-bracket",
+            include=lambda user, **_: user.is_authenticated,
+            url="/accounts/logout/",
+            view=EXTERNAL,
+        ),
         validation_queue=validation_submenu,
         iommi_admin=M(
             display_name="Admin",
