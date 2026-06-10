@@ -144,6 +144,6 @@ def is_linked_project_member(user: User, observation: Observation) -> bool:
 # Conditions are tested on the user wanting to make the change
 add_perm("app.add_observation", is_active)
 add_perm("app.change_observation", is_linked_project_member | is_staff)
-add_perm("app.delete_observation", is_staff)
+add_perm("app.delete_observation", is_linked_project_member | is_staff)
 add_perm("app.view_observation", is_active)
 

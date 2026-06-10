@@ -217,5 +217,5 @@ def is_linked_project_member(user: User, dataset: DataSet) -> bool:
 # Conditions are tested on the user wanting to make the change
 add_perm("app.add_dataset", is_active)
 add_perm("app.change_dataset", is_linked_project_member | is_staff)
-add_perm("app.delete_dataset", is_staff)
+add_perm("app.delete_dataset", is_linked_project_member | is_staff)
 add_perm("app.view_dataset", is_linked_project_member | is_staff)
