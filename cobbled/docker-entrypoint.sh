@@ -1,4 +1,5 @@
+PORT=${PORT:-8000}
 uv run manage.py collectstatic --noinput
 uv run manage.py makemigrations
 uv run manage.py migrate --noinput
-uv run uwsgi --ini uwsgi.ini
+uv run uwsgi --ini uwsgi.ini --http-socket :$PORT
