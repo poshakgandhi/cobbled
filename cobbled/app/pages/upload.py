@@ -220,7 +220,11 @@ def parse_yaml_csv_data(text_content, user, default_source=None, default_project
                 wavelength_units_id=1,
                 radial_velocity=rv_val,
                 radial_velocity_error=err_val,
-                is_valid=is_staff_user
+                is_valid=is_staff_user,
+                arxiv_url=metadata.get("arxiv") or metadata.get("arxiv_url"),
+                ads_url=metadata.get("ads") or metadata.get("ads_url"),
+                doi=metadata.get("doi"),
+                bibtex=metadata.get("bibtex")
             )
 
             observations_created.append(obs)
