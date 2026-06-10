@@ -200,7 +200,7 @@ LOGGING: dict[str, Any] = {
 # django: Set the static file (e.g. CSS, Javascript)
 # https://docs.djangoproject.com/en/1.7/howto/static-files/
 ################################################################################
-MEDIA_ROOT: Path = BASE_DIR / "media"
+MEDIA_ROOT: Path = Path(config("MEDIA_ROOT", default=str(BASE_DIR / "media")))
 MEDIA_ROOT.mkdir(parents=True, exist_ok=True)
 MEDIA_URL: str = "/media/"
 
