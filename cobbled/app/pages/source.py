@@ -48,6 +48,126 @@ def render_fit_parameters_table(parameters) -> str:
     """
 
 
+def get_planning_dates(fit_samples, t_last, jd_min):
+    if fit_samples is None:
+        return None
+
+    import numpy as np
+    import astropy.units as u
+    from astropy.time import Time
+
+    results = []
+
+    if hasattr(fit_samples, 'get_orbit'):
+        # It's a JokerSamples object
+        best_orbit = fit_samples.get_orbit(0)
+        best_P = best_orbit.P.to(u.day).value
+        
+        # Evaluate 1 cycle starting at t_last
+        t_eval = np.linspace(t_last, t_last + best_P, 300)
+        t_eval_time = Time(t_eval, format='jd')
+        rv_eval = best_orbit.radial_velocity(t_eval_time).to(u.km/u.s).value
+        
+        min_idx = np.argmin(rv_eval)
+        max_idx = np.argmax(rv_eval)
+        
+        results.append({
+            "type": "Best-fit Model",
+            "P": best_P,
+            "min_jd": t_eval[min_idx],
+            "min_date": Time(t_eval[min_idx], format='jd').iso.split()[0],
+            "min_rv": rv_eval[min_idx],
+            "max_jd": t_eval[max_idx],
+            "max_date": Time(t_eval[max_idx], format='jd').iso.split()[0],
+            "max_rv": rv_eval[max_idx],
+        })
+        
+        num_samples = len(fit_samples)
+        if num_samples > 1:
+            periods = fit_samples['P'].to(u.day).value
+            diffs = np.abs(np.log(periods / best_P))
+            alt_idx = np.argmax(diffs)
+            
+            if diffs[alt_idx] > 0.15:
+                alt_orbit = fit_samples.get_orbit(alt_idx)
+                alt_P = periods[alt_idx]
+                
+                t_eval_alt = np.linspace(t_last, t_last + alt_P, 300)
+                t_eval_alt_time = Time(t_eval_alt, format='jd')
+                rv_eval_alt = alt_orbit.radial_velocity(t_eval_alt_time).to(u.km/u.s).value
+                
+                alt_min_idx = np.argmin(rv_eval_alt)
+                alt_max_idx = np.argmax(rv_eval_alt)
+                
+                results.append({
+                    "type": "Alternative Model",
+                    "P": alt_P,
+                    "min_jd": t_eval_alt[alt_min_idx],
+                    "min_date": Time(t_eval_alt[alt_min_idx], format='jd').iso.split()[0],
+                    "min_rv": rv_eval_alt[alt_min_idx],
+                    "max_jd": t_eval_alt[alt_max_idx],
+                    "max_date": Time(t_eval_alt[alt_max_idx], format='jd').iso.split()[0],
+                    "max_rv": rv_eval_alt[alt_max_idx],
+                })
+    else:
+        # Mock data (list of dicts)
+        best_fit = fit_samples[0]
+        best_P = best_fit['P']
+        best_K = best_fit['K']
+        best_v0 = best_fit['v0']
+        best_phi = best_fit.get('phi', 0.0)
+        
+        t_eval = np.linspace(t_last, t_last + best_P, 300)
+        x_eval = t_eval - jd_min
+        rv_eval = best_v0 + best_K * np.sin(2 * np.pi * x_eval / best_P + best_phi)
+        
+        min_idx = np.argmin(rv_eval)
+        max_idx = np.argmax(rv_eval)
+        
+        results.append({
+            "type": "Best-fit Model",
+            "P": best_P,
+            "min_jd": t_eval[min_idx],
+            "min_date": Time(t_eval[min_idx], format='jd').iso.split()[0],
+            "min_rv": rv_eval[min_idx],
+            "max_jd": t_eval[max_idx],
+            "max_date": Time(t_eval[max_idx], format='jd').iso.split()[0],
+            "max_rv": rv_eval[max_idx],
+        })
+        
+        if len(fit_samples) > 1:
+            periods = [p['P'] for p in fit_samples]
+            diffs = [abs(np.log(p / best_P)) for p in periods]
+            alt_idx = np.argmax(diffs)
+            
+            if diffs[alt_idx] > 0.15:
+                alt_fit = fit_samples[alt_idx]
+                alt_P = alt_fit['P']
+                alt_K = alt_fit['K']
+                alt_v0 = alt_fit['v0']
+                alt_phi = alt_fit.get('phi', 0.0)
+                
+                t_eval_alt = np.linspace(t_last, t_last + alt_P, 300)
+                x_eval_alt = t_eval_alt - jd_min
+                rv_eval_alt = alt_v0 + alt_K * np.sin(2 * np.pi * x_eval_alt / alt_P + alt_phi)
+                
+                alt_min_idx = np.argmin(rv_eval_alt)
+                alt_max_idx = np.argmax(rv_eval_alt)
+                
+                results.append({
+                    "type": "Alternative Model",
+                    "P": alt_P,
+                    "min_jd": t_eval_alt[alt_min_idx],
+                    "min_date": Time(t_eval_alt[alt_min_idx], format='jd').iso.split()[0],
+                    "min_rv": rv_eval_alt[alt_min_idx],
+                    "max_jd": t_eval_alt[alt_max_idx],
+                    "max_date": Time(t_eval_alt[alt_max_idx], format='jd').iso.split()[0],
+                    "max_rv": rv_eval_alt[alt_max_idx],
+                })
+                
+    return results
+
+
 def render_fit_results_html(source, fit_run=False, p_guess=None, k_guess=None, v0_guess=None, e_guess=None, user=None) -> str:
     from app.models.keplerian_fit import KeplerianFit
     from app.fitting import get_fit_results, get_rv_data_hash, load_rv_data
@@ -206,11 +326,60 @@ def render_fit_results_html(source, fit_run=False, p_guess=None, k_guess=None, v
 
     table_html = render_fit_parameters_table(display_parameters)
 
+    # Calculate next observation planning dates
+    planning_html = ""
+    if display_samples:
+        try:
+            import numpy as np
+            t_last = df["jd"].max()
+            jd_min = df["jd"].min()
+            planning_dates = get_planning_dates(display_samples, t_last, jd_min)
+            if planning_dates:
+                planning_html = f"""
+                <h5 class="fw-bold mt-4 mb-3"><i class="fa-solid fa-calendar-days me-2"></i>Observation Planning (Next Extrema)</h5>
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped border align-middle small">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Model Type</th>
+                                <th>Period (days)</th>
+                                <th>Next Minimum RV Date (Gregorian)</th>
+                                <th>Min RV JD</th>
+                                <th>Min RV (km/s)</th>
+                                <th>Next Maximum RV Date (Gregorian)</th>
+                                <th>Max RV JD</th>
+                                <th>Max RV (km/s)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                """
+                for item in planning_dates:
+                    planning_html += f"""
+                            <tr>
+                                <td class="fw-bold">{item['type']}</td>
+                                <td>{item['P']:.2f}</td>
+                                <td class="text-danger fw-bold">{item['min_date']}</td>
+                                <td class="text-muted">{item['min_jd']:.4f}</td>
+                                <td class="text-danger fw-bold">{item['min_rv']:.2f}</td>
+                                <td class="text-success fw-bold">{item['max_date']}</td>
+                                <td class="text-muted">{item['max_jd']:.4f}</td>
+                                <td class="text-success fw-bold">{item['max_rv']:.2f}</td>
+                            </tr>
+                    """
+                planning_html += """
+                        </tbody>
+                    </table>
+                </div>
+                """
+        except Exception as e:
+            planning_html = f"<div class='alert alert-danger'>Error generating planning dates: {str(e)}</div>"
+
     return f"""
     {form_html}
     {status_alert}
     <h5 class="fw-bold mb-3"><i class="fa-solid fa-list-check me-2"></i>Fitted Orbital Parameters</h5>
     {table_html}
+    {planning_html}
     """
 
 

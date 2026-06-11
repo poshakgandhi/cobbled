@@ -102,8 +102,19 @@ def get_rv_plot(source: Source, fit_samples=None, user=None):
 
     # Plot fitted orbits if available
     if fit_samples:
-        x_range = (-x_margin, data["jd"].max() - jd_min + x_margin)
-        x_grid = np.linspace(x_range[0], x_range[1], 500)
+        if hasattr(fit_samples, 'get_orbit'):
+            import astropy.units as u
+            best_orbit = fit_samples.get_orbit(0)
+            P_val = best_orbit.P.to(u.day).value
+        else:
+            P_val = fit_samples[0]['P']
+
+        # Extend grid range to allow scrolling: 2 periods or 180 days (whichever is larger, cap at 365)
+        extend_days = min(365.0, max(180.0, 2.0 * P_val))
+        x_min_grid = -extend_days / 4.0
+        x_max_grid = (data["jd"].max() - jd_min) + extend_days
+
+        x_grid = np.linspace(x_min_grid, x_max_grid, 1000)
         jd_grid = x_grid + jd_min
 
         if hasattr(fit_samples, 'get_orbit'):
@@ -245,6 +256,7 @@ def get_rv_plot(source: Source, fit_samples=None, user=None):
         annotations=plotAnnotes,
         showlegend=True if (got_gaia_rv or fit_samples is not None) else False,
         xaxis_range=[-x_margin, data["jd"].max() - jd_min + x_margin],
+        dragmode="pan",
     )
 
     return plot(fig, output_type="div")
