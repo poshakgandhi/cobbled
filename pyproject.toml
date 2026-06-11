@@ -45,6 +45,13 @@ dependencies = [
     "setuptools>=80.9.0",
     "uwsgi>=2.0.31",
     "whitenoise>=6.11.0",
+    "astropy",
+    "astroquery",
+    "pymc",
+    "pymc_ext",
+    "pytensor",
+    "thejoker",
+    "twobody",
 ]
 
 [project.optional-dependencies]
