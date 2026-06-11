@@ -1,6 +1,18 @@
-FROM ghcr.io/astral-sh/uv:alpine
+FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
 
-RUN apk add --update gcc linux-headers musl-dev openldap-dev python3-dev bash make
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    python3-dev \
+    libldap2-dev \
+    libsasl2-dev \
+    libxml2-dev \
+    libxslt-dev \
+    libxmlsec1-dev \
+    libxmlsec1-openssl \
+    pkg-config \
+    bash \
+    make \
+    && rm -rf /var/lib/apt/lists/*
 
 # set environment variables
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1
