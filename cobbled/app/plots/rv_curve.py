@@ -102,20 +102,49 @@ def get_rv_plot(source: Source, fit_samples=None, user=None):
 
     # Plot fitted orbits if available
     if fit_samples:
+        # Extend grid range significantly to allow panning over a very wide range (-2000 to +2000 days)
+        x_min_grid = -2000.0
+        x_max_grid = (data["jd"].max() - jd_min) + 2000.0
+
+        x_grid = np.linspace(x_min_grid, x_max_grid, 2000)
+        jd_grid = x_grid + jd_min
+
+        # Calculate next extrema for the best-fit model
+        t_last = data["jd"].max()
         if hasattr(fit_samples, 'get_orbit'):
             import astropy.units as u
+            from astropy.time import Time
             best_orbit = fit_samples.get_orbit(0)
-            P_val = best_orbit.P.to(u.day).value
+            best_P = best_orbit.P.to(u.day).value
+            
+            t_eval = np.linspace(t_last, t_last + best_P, 300)
+            t_eval_time = Time(t_eval, format='jd')
+            rv_eval = best_orbit.radial_velocity(t_eval_time).to(u.km/u.s).value
+            
+            min_idx = np.argmin(rv_eval)
+            max_idx = np.argmax(rv_eval)
+            
+            extrema_x = [t_eval[min_idx] - jd_min, t_eval[max_idx] - jd_min]
+            extrema_y = [rv_eval[min_idx], rv_eval[max_idx]]
+            extrema_text = ["Next Min RV Peak", "Next Max RV Peak"]
         else:
-            P_val = fit_samples[0]['P']
-
-        # Extend grid range to allow scrolling: 2 periods or 180 days (whichever is larger, cap at 365)
-        extend_days = min(365.0, max(180.0, 2.0 * P_val))
-        x_min_grid = -extend_days / 4.0
-        x_max_grid = (data["jd"].max() - jd_min) + extend_days
-
-        x_grid = np.linspace(x_min_grid, x_max_grid, 1000)
-        jd_grid = x_grid + jd_min
+            # Mock data
+            best_fit = fit_samples[0]
+            best_P = best_fit['P']
+            best_K = best_fit['K']
+            best_v0 = best_fit['v0']
+            best_phi = best_fit.get('phi', 0.0)
+            
+            t_eval = np.linspace(t_last, t_last + best_P, 300)
+            x_eval = t_eval - jd_min
+            rv_eval = best_v0 + best_K * np.sin(2 * np.pi * x_eval / best_P + best_phi)
+            
+            min_idx = np.argmin(rv_eval)
+            max_idx = np.argmax(rv_eval)
+            
+            extrema_x = [t_eval[min_idx] - jd_min, t_eval[max_idx] - jd_min]
+            extrema_y = [rv_eval[min_idx], rv_eval[max_idx]]
+            extrema_text = ["Next Min RV Peak", "Next Max RV Peak"]
 
         if hasattr(fit_samples, 'get_orbit'):
             # It's a JokerSamples object
@@ -178,6 +207,26 @@ def get_rv_plot(source: Source, fit_samples=None, user=None):
                         showlegend=(i == 0),
                     )
                 )
+
+        # Plot planning next extrema on the RV curve (red squares)
+        fig.add_trace(
+            go.Scatter(
+                x=extrema_x,
+                y=extrema_y,
+                mode="markers+text",
+                name="Model Next Extrema",
+                marker=dict(
+                    symbol="square",
+                    color="red",
+                    size=10,
+                    line=dict(width=1.5, color="white")
+                ),
+                text=extrema_text,
+                textposition="top center",
+                textfont=dict(color="red", size=9, family="Arial Black"),
+                showlegend=True,
+            )
+        )
 
     # Plot observed data points
     fig.add_trace(
