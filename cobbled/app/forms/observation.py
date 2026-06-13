@@ -98,10 +98,12 @@ class BulkObservationForm(Form):
             # Create observation / observation-datafile pairs for each row in index.csv
             for _, row in indexdf.iterrows():
                 try:
+                    is_approved_user = user.is_staff or (user.is_active and hasattr(user, "researcher")) if user else False
                     obs_object = Observation(
                         source=fields.source.value,
                         proposal=fields.proposal.value,
                         jd=row["jd"],
+                        is_valid=is_approved_user,
                     )
 
                 except ValueError:
@@ -134,7 +136,7 @@ class BulkObservationForm(Form):
                         flux_units=fields.flux_units.value,
                         wavelength_col=fields.wavelength_col.value,
                         wavelength_units=fields.wavelength_units.value,
-                        is_valid=user.is_staff,
+                        is_valid=is_approved_user,
                     )
                 except AssertionError:
                     # If the metadata for the value object is bad, skip it

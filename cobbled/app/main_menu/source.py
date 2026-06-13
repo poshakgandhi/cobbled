@@ -60,7 +60,7 @@ source_submenu: M = DynamicSourcesMenu(
                     is_valid=dict(
                         # We could exclude this (with `auto__exclude=['is_valid']`) but we don't to show the users.
                         after=LAST,
-                        initial=lambda user, **_: user.is_staff,
+                        initial=lambda user, **_: user.is_staff or (user.is_active and hasattr(user, "researcher")),
                         editable=False,
                     )
                 ),

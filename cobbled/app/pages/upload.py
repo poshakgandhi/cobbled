@@ -53,6 +53,7 @@ def parse_yaml_csv_data(text_content, user, default_source=None, default_project
         try:
             project = Project.objects.get(name__iexact=project_name)
         except Project.DoesNotExist:
+            is_approved_user = user.is_staff or (user.is_active and hasattr(user, "researcher")) if user else False
             if not user.is_staff:
                 if not hasattr(user, "researcher"):
                     raise ValueError("Only registered researchers can create a new project during upload.")
@@ -60,7 +61,7 @@ def parse_yaml_csv_data(text_content, user, default_source=None, default_project
                     name=project_name,
                     description=f"Auto-created during upload by {user.username}",
                     principal_investigator=user.researcher,
-                    is_valid=False
+                    is_valid=is_approved_user
                 )
             else:
                 researcher = getattr(user, "researcher", None)
@@ -164,11 +165,11 @@ def parse_yaml_csv_data(text_content, user, default_source=None, default_project
                 raise ValueError(f"Row {row_num}: Source name not specified in YAML header, form, or CSV row.")
 
             # Get or create source
-            is_staff_user = user.is_staff if user else False
+            is_approved_user = user.is_staff or (user.is_active and hasattr(user, "researcher")) if user else False
             source, created = Source.objects.get_or_create(
                 name=row_source_name,
                 defaults={
-                    "is_valid": is_staff_user,
+                    "is_valid": is_approved_user,
                     "ra": ra_val or 0.0,
                     "dec": dec_val or 0.0,
                     "created_by": user.researcher if user and hasattr(user, "researcher") else None
@@ -220,7 +221,7 @@ def parse_yaml_csv_data(text_content, user, default_source=None, default_project
                 wavelength_units_id=1,
                 radial_velocity=rv_val,
                 radial_velocity_error=err_val,
-                is_valid=is_staff_user,
+                is_valid=is_approved_user,
                 arxiv_url=metadata.get("arxiv") or metadata.get("arxiv_url"),
                 ads_url=metadata.get("ads") or metadata.get("ads_url"),
                 doi=metadata.get("doi"),

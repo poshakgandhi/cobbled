@@ -26,7 +26,7 @@ observation_submenu = M(
                 fields=dict(
                     is_valid=dict(
                         after=LAST,
-                        initial=lambda user, **_: user.is_staff,
+                        initial=lambda user, **_: user.is_staff or (user.is_active and hasattr(user, "researcher")),
                         editable=False,
                     )
                 ),

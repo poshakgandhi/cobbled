@@ -153,8 +153,9 @@ HJD, RV, RV_Error
 2459823.8525, 53.76, 0.2
 2459850.1234, -10.5, 0.3
 """
-        # testuser is not staff
+        # testuser is not staff and is not active (unapproved researcher)
         self.user_other.is_staff = False
+        self.user_other.is_active = False
         self.user_other.save()
 
         # Grant access to project for testuser so they can upload
@@ -187,9 +188,10 @@ HJD, RV, RV_Error
         self.assertTrue(source_has_rv_data(new_source, user=self.user_pi))
 
     def test_auto_create_project_non_staff(self):
-        # testuser is not staff
+        # testuser is not staff and is not active (unapproved researcher)
         self.user_other.is_staff = False
         self.user_other.is_superuser = False
+        self.user_other.is_active = False
         self.user_other.save()
 
         yaml_csv_data = """---
