@@ -110,7 +110,8 @@ def get_rv_plot(source: Source, fit_samples=None, user=None):
         jd_grid = x_grid + jd_min
 
         # Calculate next extrema for the best-fit model
-        t_last = data["jd"].max()
+        from astropy.time import Time
+        t_last = Time.now().jd
         if hasattr(fit_samples, 'get_orbit'):
             import astropy.units as u
             from astropy.time import Time

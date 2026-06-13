@@ -330,8 +330,8 @@ def render_fit_results_html(source, fit_run=False, p_guess=None, k_guess=None, v
     planning_html = ""
     if display_samples:
         try:
-            import numpy as np
-            t_last = df["jd"].max()
+            from astropy.time import Time
+            t_last = Time.now().jd
             jd_min = df["jd"].min()
             planning_dates = get_planning_dates(display_samples, t_last, jd_min)
             if planning_dates:
