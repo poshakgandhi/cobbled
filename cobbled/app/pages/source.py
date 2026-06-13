@@ -331,46 +331,70 @@ def render_fit_results_html(source, fit_run=False, p_guess=None, k_guess=None, v
     if display_samples:
         try:
             from astropy.time import Time
-            t_last = Time.now().jd
+            t_now = Time.now().jd
+            t_last_obs = df["jd"].max()
             jd_min = df["jd"].min()
-            planning_dates = get_planning_dates(display_samples, t_last, jd_min)
-            if planning_dates:
+            
+            # Determine period for threshold check
+            best_P = None
+            if hasattr(display_samples, 'get_orbit'):
+                import astropy.units as u
+                best_orbit = display_samples.get_orbit(0)
+                best_P = best_orbit.P.to(u.day).value
+            elif display_samples:
+                best_P = display_samples[0]['P']
+                
+            limit = max(365.0, 5 * best_P) if best_P else 365.0
+            is_far_ahead = (t_now - t_last_obs) > limit
+
+            if is_far_ahead:
                 planning_html = f"""
                 <h5 class="fw-bold mt-4 mb-3"><i class="fa-solid fa-calendar-days me-2"></i>Observation Planning (Next Extrema)</h5>
-                <div class="table-responsive">
-                    <table class="table table-hover table-striped border align-middle small">
-                        <thead class="table-dark">
-                            <tr>
-                                <th>Model Type</th>
-                                <th>Period (days)</th>
-                                <th>Next Minimum RV Date (Gregorian)</th>
-                                <th>Min RV JD</th>
-                                <th>Min RV (km/s)</th>
-                                <th>Next Maximum RV Date (Gregorian)</th>
-                                <th>Max RV JD</th>
-                                <th>Max RV (km/s)</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                """
-                for item in planning_dates:
-                    planning_html += f"""
-                            <tr>
-                                <td class="fw-bold">{item['type']}</td>
-                                <td>{item['P']:.2f}</td>
-                                <td class="text-danger fw-bold">{item['min_date']}</td>
-                                <td class="text-muted">{item['min_jd']:.4f}</td>
-                                <td class="text-danger fw-bold">{item['min_rv']:.2f}</td>
-                                <td class="text-success fw-bold">{item['max_date']}</td>
-                                <td class="text-muted">{item['max_jd']:.4f}</td>
-                                <td class="text-success fw-bold">{item['max_rv']:.2f}</td>
-                            </tr>
-                    """
-                planning_html += """
-                        </tbody>
-                    </table>
+                <div class="alert alert-warning py-3">
+                    <i class="fa-solid fa-triangle-exclamation me-2 fs-5 align-middle"></i>
+                    <span><strong>Notice:</strong> The current date ({Time(t_now, format='jd').iso.split()[0]}) is far ahead of the last observation date ({Time(t_last_obs, format='jd').iso.split()[0]}) by {(t_now - t_last_obs):.1f} days. 
+                    Predictions for the next RV extrema are not shown because they are highly uncertain due to accumulated phase errors over many orbital cycles.</span>
                 </div>
                 """
+            else:
+                planning_dates = get_planning_dates(display_samples, t_now, jd_min)
+                if planning_dates:
+                    planning_html = f"""
+                    <h5 class="fw-bold mt-4 mb-3"><i class="fa-solid fa-calendar-days me-2"></i>Observation Planning (Next Extrema)</h5>
+                    <div class="table-responsive">
+                        <table class="table table-hover table-striped border align-middle small">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Model Type</th>
+                                    <th>Period (days)</th>
+                                    <th>Next Minimum RV Date (Gregorian)</th>
+                                    <th>Min RV JD</th>
+                                    <th>Min RV (km/s)</th>
+                                    <th>Next Maximum RV Date (Gregorian)</th>
+                                    <th>Max RV JD</th>
+                                    <th>Max RV (km/s)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    """
+                    for item in planning_dates:
+                        planning_html += f"""
+                                <tr>
+                                    <td class="fw-bold">{item['type']}</td>
+                                    <td>{item['P']:.2f}</td>
+                                    <td class="text-danger fw-bold">{item['min_date']}</td>
+                                    <td class="text-muted">{item['min_jd']:.4f}</td>
+                                    <td class="text-danger fw-bold">{item['min_rv']:.2f}</td>
+                                    <td class="text-success fw-bold">{item['max_date']}</td>
+                                    <td class="text-muted">{item['max_jd']:.4f}</td>
+                                    <td class="text-success fw-bold">{item['max_rv']:.2f}</td>
+                                </tr>
+                        """
+                    planning_html += """
+                            </tbody>
+                        </table>
+                    </div>
+                    """
         except Exception as e:
             planning_html = f"<div class='alert alert-danger'>Error generating planning dates: {str(e)}</div>"
 

@@ -111,41 +111,54 @@ def get_rv_plot(source: Source, fit_samples=None, user=None):
 
         # Calculate next extrema for the best-fit model
         from astropy.time import Time
-        t_last = Time.now().jd
+        t_now = Time.now().jd
+        t_last_obs = data["jd"].max()
+        
+        # Get period for threshold check
         if hasattr(fit_samples, 'get_orbit'):
             import astropy.units as u
-            from astropy.time import Time
             best_orbit = fit_samples.get_orbit(0)
             best_P = best_orbit.P.to(u.day).value
-            
-            t_eval = np.linspace(t_last, t_last + best_P, 300)
-            t_eval_time = Time(t_eval, format='jd')
-            rv_eval = best_orbit.radial_velocity(t_eval_time).to(u.km/u.s).value
-            
-            min_idx = np.argmin(rv_eval)
-            max_idx = np.argmax(rv_eval)
-            
-            extrema_x = [t_eval[min_idx] - jd_min, t_eval[max_idx] - jd_min]
-            extrema_y = [rv_eval[min_idx], rv_eval[max_idx]]
-            extrema_text = ["Next Min RV Peak", "Next Max RV Peak"]
         else:
-            # Mock data
             best_fit = fit_samples[0]
             best_P = best_fit['P']
-            best_K = best_fit['K']
-            best_v0 = best_fit['v0']
-            best_phi = best_fit.get('phi', 0.0)
-            
-            t_eval = np.linspace(t_last, t_last + best_P, 300)
-            x_eval = t_eval - jd_min
-            rv_eval = best_v0 + best_K * np.sin(2 * np.pi * x_eval / best_P + best_phi)
-            
-            min_idx = np.argmin(rv_eval)
-            max_idx = np.argmax(rv_eval)
-            
-            extrema_x = [t_eval[min_idx] - jd_min, t_eval[max_idx] - jd_min]
-            extrema_y = [rv_eval[min_idx], rv_eval[max_idx]]
-            extrema_text = ["Next Min RV Peak", "Next Max RV Peak"]
+
+        limit = max(365.0, 5 * best_P)
+        is_far_ahead = (t_now - t_last_obs) > limit
+
+        extrema_x = []
+        extrema_y = []
+        extrema_text = []
+
+        if not is_far_ahead:
+            t_last = t_now
+            if hasattr(fit_samples, 'get_orbit'):
+                t_eval = np.linspace(t_last, t_last + best_P, 300)
+                t_eval_time = Time(t_eval, format='jd')
+                rv_eval = best_orbit.radial_velocity(t_eval_time).to(u.km/u.s).value
+                
+                min_idx = np.argmin(rv_eval)
+                max_idx = np.argmax(rv_eval)
+                
+                extrema_x = [t_eval[min_idx] - jd_min, t_eval[max_idx] - jd_min]
+                extrema_y = [rv_eval[min_idx], rv_eval[max_idx]]
+                extrema_text = ["Next Min RV Peak", "Next Max RV Peak"]
+            else:
+                # Mock data
+                best_K = best_fit['K']
+                best_v0 = best_fit['v0']
+                best_phi = best_fit.get('phi', 0.0)
+                
+                t_eval = np.linspace(t_last, t_last + best_P, 300)
+                x_eval = t_eval - jd_min
+                rv_eval = best_v0 + best_K * np.sin(2 * np.pi * x_eval / best_P + best_phi)
+                
+                min_idx = np.argmin(rv_eval)
+                max_idx = np.argmax(rv_eval)
+                
+                extrema_x = [t_eval[min_idx] - jd_min, t_eval[max_idx] - jd_min]
+                extrema_y = [rv_eval[min_idx], rv_eval[max_idx]]
+                extrema_text = ["Next Min RV Peak", "Next Max RV Peak"]
 
         if hasattr(fit_samples, 'get_orbit'):
             # It's a JokerSamples object
@@ -210,24 +223,25 @@ def get_rv_plot(source: Source, fit_samples=None, user=None):
                 )
 
         # Plot planning next extrema on the RV curve (red squares)
-        fig.add_trace(
-            go.Scatter(
-                x=extrema_x,
-                y=extrema_y,
-                mode="markers+text",
-                name="Model Next Extrema",
-                marker=dict(
-                    symbol="square",
-                    color="red",
-                    size=10,
-                    line=dict(width=1.5, color="white")
-                ),
-                text=extrema_text,
-                textposition="top center",
-                textfont=dict(color="red", size=9, family="Arial Black"),
-                showlegend=True,
+        if extrema_x:
+            fig.add_trace(
+                go.Scatter(
+                    x=extrema_x,
+                    y=extrema_y,
+                    mode="markers+text",
+                    name="Model Next Extrema",
+                    marker=dict(
+                        symbol="square",
+                        color="red",
+                        size=10,
+                        line=dict(width=1.5, color="white")
+                    ),
+                    text=extrema_text,
+                    textposition="top center",
+                    textfont=dict(color="red", size=9, family="Arial Black"),
+                    showlegend=True,
+                )
             )
-        )
 
     # Plot observed data points
     fig.add_trace(
