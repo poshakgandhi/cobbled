@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.core.validators import MaxValueValidator, MinValueValidator
-from django.db.models import BooleanField, CharField, FloatField, Model, ForeignKey, CASCADE
+from django.db.models import BooleanField, CharField, FloatField, Model, ForeignKey, CASCADE, SET_NULL
 from rules import add_perm, is_active, is_staff
 
 
@@ -15,7 +15,7 @@ class Source(Model):
 
     created_by = ForeignKey(
         "Researcher",
-        on_delete=CASCADE,
+        on_delete=SET_NULL,
         null=True,
         blank=True,
         related_name="created_sources",

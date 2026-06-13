@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.db.models import (
     RESTRICT,
+    SET_NULL,
     BooleanField,
     CharField,
     ForeignKey,
@@ -39,7 +40,9 @@ class Project(Model):
 
     principal_investigator = ForeignKey(
         Researcher,
-        on_delete=RESTRICT,
+        on_delete=SET_NULL,
+        null=True,
+        blank=True,
         verbose_name="Principal Investigator",
         help_text="The PI associated with the project.",
         related_name="project_piship",

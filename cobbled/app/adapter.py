@@ -8,6 +8,23 @@ from app.models.researcher import Researcher
 User = get_user_model()
 
 
+def notify_superusers(user: User):
+    if not user.is_active:
+        from django.core.mail import send_mail
+        superusers = User.objects.filter(is_superuser=True)
+        recipient_list = [u.email for u in superusers if u.email]
+        if recipient_list:
+            subject = "[COBBLED] New User Validation Awaiting"
+            message = f"A new user has registered and is awaiting validation:\n\nUsername: {user.username}\nEmail: {user.email}\n\nPlease log in and check the Validation Queue to review and approve them."
+            send_mail(
+                subject,
+                message,
+                from_email=None,
+                recipient_list=recipient_list,
+                fail_silently=True,
+            )
+
+
 class CustomAccountAdapter(DefaultAccountAdapter):
     """
     Adapter to hook into regular email/password signups.
@@ -38,6 +55,8 @@ class CustomAccountAdapter(DefaultAccountAdapter):
             orcid="0000-0000-0000-0000"
         )
         researcher.save()
+
+        notify_superusers(user)
         return user
 
 
@@ -79,6 +98,7 @@ class UsernameAdapter(DefaultSocialAccountAdapter):
             orcid="0000-0000-0000-0000"
         )
         researcher.save()
+        notify_superusers(user)
         return user
 
     def get_connect_redirect_url(self, request: HttpRequest, socialaccount) -> str:

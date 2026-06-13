@@ -13,7 +13,7 @@ from iommi.main_menu import EXTERNAL, M
 from app.forms.researcher import ProfileChangeForm, ProfileForm
 
 account_submenu: M = M(
-    display_name=lambda user, **_: user.get_full_name(),
+    display_name=lambda user, **_: user.username,
     icon="user",
     include=lambda user, **_: user.is_authenticated and user.is_active,
     view=ProfileForm().as_view(),

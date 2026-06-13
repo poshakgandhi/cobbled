@@ -280,10 +280,10 @@ SOCIALACCOUNT_FORMS = {
 # https://docs.allauth.org/en/latest/account/advanced.html
 ACCOUNT_ADAPTER: str = "app.adapter.CustomAccountAdapter"
 ACCOUNT_LOGIN_METHODS: set[str] = {"email"}
-ACCOUNT_SIGNUP_FIELDS: list[str] = ["email*", "password1*", "password2*"]
+ACCOUNT_SIGNUP_FIELDS: list[str] = ["username*", "email*", "password1*", "password2*"]
 ACCOUNT_EMAIL_VERIFICATION: str = "none"
 ACCOUNT_UNIQUE_EMAIL: bool = True
-ACCOUNT_USER_MODEL_USERNAME_FIELD = None
+ACCOUNT_USER_MODEL_USERNAME_FIELD = "username"
 ACCOUNT_LOGOUT_ON_GET: bool = True  # This is so log-out is a one-click process
 LOGIN_REDIRECT_URL: str = "/"
 
