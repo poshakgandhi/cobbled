@@ -102,11 +102,8 @@ def get_rv_plot(source: Source, fit_samples=None, user=None):
 
     # Plot fitted orbits if available
     if fit_samples:
-        # Extend grid range significantly to allow panning over a very wide range (-2000 to +2000 days)
-        x_min_grid = -2000.0
-        x_max_grid = (data["jd"].max() - jd_min) + 2000.0
-
-        x_grid = np.linspace(x_min_grid, x_max_grid, 2000)
+        x_range = (-x_margin, data["jd"].max() - jd_min + x_margin)
+        x_grid = np.linspace(x_range[0], x_range[1], 500)
         jd_grid = x_grid + jd_min
 
         # Calculate next extrema for the best-fit model
