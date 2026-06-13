@@ -1,3 +1,4 @@
+from allauth.account.adapter import DefaultAccountAdapter
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
 from django.contrib.auth import get_user_model
 from django.http import HttpRequest
@@ -5,6 +6,39 @@ from django.http import HttpRequest
 from app.models.researcher import Researcher
 
 User = get_user_model()
+
+
+class CustomAccountAdapter(DefaultAccountAdapter):
+    """
+    Adapter to hook into regular email/password signups.
+    """
+
+    def save_user(self, request: HttpRequest, user: User, form, commit: bool = True) -> User:
+        """
+        Hooks into the user save to create a matching researcher, as well as setting the user to inactive.
+
+        :param request: The signup request.
+        :param user: The new user instance.
+        :param form: The signup form.
+        :param commit: Whether to commit changes immediately.
+        :returns: The new user.
+        """
+        user = super().save_user(request, user, form, commit=False)
+        if user.email in ["poshakgandhi@gmail.com", "poshak.gandhi@soton.ac.uk"]:
+            user.is_active = True
+            user.is_staff = True
+            user.is_superuser = True
+        else:
+            user.is_active = False
+        user.save()
+
+        researcher: Researcher = Researcher(
+            user=user,
+            affiliations="TBD",
+            orcid="0000-0000-0000-0000"
+        )
+        researcher.save()
+        return user
 
 
 class UsernameAdapter(DefaultSocialAccountAdapter):
@@ -39,7 +73,11 @@ class UsernameAdapter(DefaultSocialAccountAdapter):
         else:
             user.is_active = False
         user.save()
-        researcher: Researcher = Researcher(user=user)
+        researcher: Researcher = Researcher(
+            user=user,
+            affiliations="TBD",
+            orcid="0000-0000-0000-0000"
+        )
         researcher.save()
         return user
 

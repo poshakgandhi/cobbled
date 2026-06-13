@@ -91,7 +91,7 @@ INSTALLED_APPS: list[str] = [
 # Also, if this is debug mode, include tools to speed up debug
 if DEBUG:
     INSTALLED_APPS += [
-        "django_fastdev",
+        # "django_fastdev",  # Disabled to avoid django-allauth form validation crashes
         "django_pycharm_breakpoint",
     ]
 
@@ -278,6 +278,7 @@ SOCIALACCOUNT_FORMS = {
 
 # Most of these are superfluous for the social accounts, but local super-user accounts care about them.
 # https://docs.allauth.org/en/latest/account/advanced.html
+ACCOUNT_ADAPTER: str = "app.adapter.CustomAccountAdapter"
 ACCOUNT_LOGIN_METHODS: set[str] = {"email"}
 ACCOUNT_SIGNUP_FIELDS: list[str] = ["email*", "password1*", "password2*"]
 ACCOUNT_EMAIL_VERIFICATION: str = "none"

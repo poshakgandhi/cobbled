@@ -27,6 +27,32 @@ class MainAppConfig(AppConfig):
             WavelengthUnit,
         )
 
+        # Ensure all existing users have Researcher profiles on first request
+        from django.core.signals import request_started
+        
+        def on_request_started(sender, **kwargs):
+            request_started.disconnect(on_request_started)
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            try:
+                for user in User.objects.all():
+                    if not hasattr(user, 'researcher'):
+                        if user.is_staff or user.is_superuser or user.email in ["poshakgandhi@gmail.com", "poshak.gandhi@soton.ac.uk", "jc2a23soton@gmail.com"]:
+                            pass
+                        else:
+                            user.is_active = False
+                            user.save()
+                        
+                        Researcher.objects.create(
+                            user=user,
+                            affiliations="TBD",
+                            orcid="0000-0000-0000-0000"
+                        )
+            except Exception as e:
+                logger.warning(f"Could not check/create missing researcher profiles: {e}")
+
+        request_started.connect(on_request_started)
+
         # Iommi path decoding and settings for model searches
         register_search_fields(
             model=Instrument, search_fields=["name", "observatory"], allow_non_unique=True
