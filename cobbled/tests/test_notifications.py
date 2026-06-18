@@ -10,10 +10,15 @@ User = get_user_model()
 
 class NotificationTestCase(TestCase):
     def setUp(self):
-        # Create a superuser to receive notifications
+        # Create superusers (including poshakgandhi@gmail.com) to receive notifications
         self.superuser = User.objects.create_superuser(
             username="admin",
             email="admin@example.com",
+            password="password123"
+        )
+        self.poshak_superuser = User.objects.create_superuser(
+            username="poshak_admin",
+            email="poshakgandhi@gmail.com",
             password="password123"
         )
         mail.outbox.clear()
@@ -28,11 +33,12 @@ class NotificationTestCase(TestCase):
         saved_user = adapter.save_user(request, user, None, commit=True)
         
         self.assertFalse(saved_user.is_active)
-        # Check that an email was sent to the superuser
+        # Check that an email was sent to all superusers
         self.assertEqual(len(mail.outbox), 1)
         email = mail.outbox[0]
         self.assertEqual(email.subject, "[COBBLED] New User Validation Awaiting")
         self.assertIn("admin@example.com", email.to)
+        self.assertIn("poshakgandhi@gmail.com", email.to)
         self.assertIn("newuser", email.body)
 
     @patch('allauth.account.adapter.DefaultAccountAdapter.save_user')
@@ -59,8 +65,9 @@ class NotificationTestCase(TestCase):
         saved_user = adapter.save_user(request, social_login)
         
         self.assertFalse(saved_user.is_active)
-        # Check that an email was sent to the superuser
+        # Check that an email was sent to all superusers
         self.assertEqual(len(mail.outbox), 1)
         email = mail.outbox[0]
         self.assertEqual(email.subject, "[COBBLED] New User Validation Awaiting")
         self.assertIn("admin@example.com", email.to)
+        self.assertIn("poshakgandhi@gmail.com", email.to)

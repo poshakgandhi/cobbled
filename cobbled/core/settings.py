@@ -321,3 +321,18 @@ ALADIN_DEFAULT_FOV: float = config("ALADIN_DEFAULT_FOV", cast=float, default=0.2
 ALADIN_DEFAULT_SURVEY: str = config("ALADIN_DEFAULT_SURVEY", cast=str, default="'P/DSS2/color'")
 if ALADIN_DEFAULT_SURVEY[0] != "'":
     ALADIN_DEFAULT_SURVEY = "'" + ALADIN_DEFAULT_SURVEY + "'"
+
+# Django Email Settings
+EMAIL_HOST = config("EMAIL_HOST", default="")
+EMAIL_PORT = config("EMAIL_PORT", cast=int, default=587)
+EMAIL_HOST_USER = config("EMAIL_HOST_USER", default="")
+EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default="")
+EMAIL_USE_TLS = config("EMAIL_USE_TLS", cast=bool, default=True)
+EMAIL_USE_SSL = config("EMAIL_USE_SSL", cast=bool, default=False)
+DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="webmaster@gaia-cob.rsgsoton.net")
+
+if EMAIL_HOST:
+    EMAIL_BACKEND = config("EMAIL_BACKEND", default="django.core.mail.backends.smtp.EmailBackend")
+else:
+    EMAIL_BACKEND = config("EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend")
+

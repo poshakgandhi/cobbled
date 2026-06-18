@@ -3,7 +3,7 @@ Main menu that describes the site views and URL structure,
 as well as controlling access to the views.
 """
 
-from iommi.admin import Admin
+from app.iommi_admin import CobbledAdmin
 from iommi.main_menu import EXTERNAL, M, MainMenu
 
 from app.main_menu.account import account_submenu
@@ -62,8 +62,8 @@ main_menu = MainMenu(
             display_name="Admin",
             icon="screwdriver-wrench",
             include=lambda user, **_: user.is_staff,
-            paths=Admin.urls().urlpatterns,
-            view=Admin.all_models(),
+            paths=CobbledAdmin.urls().urlpatterns,
+            view=CobbledAdmin.all_models(),
         ),
         # ---------------- This just adds a bar into the menu ----------------
         separator_3=M(view=EXTERNAL, template="app/main_menu/spacer.html"),

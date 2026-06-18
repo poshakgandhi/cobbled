@@ -11,18 +11,26 @@ User = get_user_model()
 def notify_superusers(user: User):
     if not user.is_active:
         from django.core.mail import send_mail
+        import logging
+        logger = logging.getLogger("app")
+
         superusers = User.objects.filter(is_superuser=True)
         recipient_list = [u.email for u in superusers if u.email]
         if recipient_list:
             subject = "[COBBLED] New User Validation Awaiting"
             message = f"A new user has registered and is awaiting validation:\n\nUsername: {user.username}\nEmail: {user.email}\n\nPlease log in and check the Validation Queue to review and approve them."
-            send_mail(
-                subject,
-                message,
-                from_email=None,
-                recipient_list=recipient_list,
-                fail_silently=True,
-            )
+            try:
+                send_mail(
+                    subject,
+                    message,
+                    from_email=None,
+                    recipient_list=recipient_list,
+                    fail_silently=False,
+                )
+                logger.info(f"Notification email sent successfully for user {user.username} to {recipient_list}")
+            except Exception as e:
+                logger.error(f"Failed to send user registration notification email: {str(e)}", exc_info=True)
+
 
 
 class CustomAccountAdapter(DefaultAccountAdapter):
