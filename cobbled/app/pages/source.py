@@ -17,6 +17,35 @@ def source_has_rv_data(source, user=None) -> bool:
         return False
 
 
+def get_request_cached_fit(source, request, fit_run, p_guess, k_guess, v0_guess, e_guess):
+    if not request:
+        from app.fitting import get_fit_results
+        return get_fit_results(
+            source,
+            force_run=fit_run,
+            p_guess=p_guess,
+            k_guess=k_guess,
+            v0_guess=v0_guess,
+            e_guess=e_guess,
+            user=None
+        )
+
+    cache_key = f"_fit_results_{source.id}"
+    if not hasattr(request, cache_key):
+        from app.fitting import get_fit_results
+        fit_samples, fit_parameters = get_fit_results(
+            source,
+            force_run=fit_run,
+            p_guess=p_guess,
+            k_guess=k_guess,
+            v0_guess=v0_guess,
+            e_guess=e_guess,
+            user=request.user
+        )
+        setattr(request, cache_key, (fit_samples, fit_parameters))
+    return getattr(request, cache_key)
+
+
 def render_fit_parameters_table(parameters) -> str:
     rows = ""
     for p in parameters:
@@ -170,13 +199,13 @@ def get_planning_dates(fit_samples, t_last, jd_min):
     return results
 
 
-def render_fit_results_html(source, fit_run=False, p_guess=None, k_guess=None, v0_guess=None, e_guess=None, user=None) -> str:
+def render_fit_results_html(source, fit_run=False, p_guess=None, k_guess=None, v0_guess=None, e_guess=None, request=None) -> str:
     from app.models.keplerian_fit import KeplerianFit
-    from app.fitting import get_fit_results, get_rv_data_hash, load_rv_data
+    from app.fitting import get_rv_data_hash, load_rv_data
 
     # Check minimum observation requirement
     try:
-        df = load_rv_data(source, user=user)
+        df = load_rv_data(source, user=request.user if request else None)
         if df.shape[0] < 3:
             return ""
     except ValueError:
@@ -196,25 +225,14 @@ def render_fit_results_html(source, fit_run=False, p_guess=None, k_guess=None, v
         except ValueError:
             pass
 
-    # Determine if we should display a fit (either newly run, or loaded from DB)
-    display_samples = None
-    display_parameters = None
-    status_alert = ""
+    # Retrieve or run the fit (cached on request to avoid double runs)
+    display_samples, display_parameters = get_request_cached_fit(
+        source, request, fit_run, p_guess, k_guess, v0_guess, e_guess
+    )
 
+    status_alert = ""
     if fit_run:
-        # User requested a new fit
-        samples, parameters = get_fit_results(
-            source,
-            force_run=True,
-            p_guess=p_guess,
-            k_guess=k_guess,
-            v0_guess=v0_guess,
-            e_guess=e_guess,
-            user=user
-        )
-        if samples is not None:
-            display_samples = samples
-            display_parameters = parameters
+        if display_samples is not None:
             status_alert = f"""
             <div class="alert alert-success d-flex align-items-center mb-4" role="alert">
                 <div class="me-3">
@@ -222,7 +240,7 @@ def render_fit_results_html(source, fit_run=False, p_guess=None, k_guess=None, v
                 </div>
                 <div>
                     <h5 class="alert-heading mb-1 fw-bold">Keplerian Fit Successful!</h5>
-                    <p class="mb-0">The Joker completed rejection sampling successfully and returned {len(samples)} posterior orbits. The results have been saved to the database.</p>
+                    <p class="mb-0">The Joker completed rejection sampling successfully and returned {len(display_samples)} posterior orbits. The results have been saved to the database.</p>
                 </div>
             </div>
             """
@@ -238,12 +256,7 @@ def render_fit_results_html(source, fit_run=False, p_guess=None, k_guess=None, v
                 </div>
             </div>
             """
-    elif saved_fit:
-        # Load from database automatically
-        from app.fitting import deserialize_samples
-        display_samples = deserialize_samples(saved_fit.sample_bundle)
-        display_parameters = saved_fit.fit_parameters
-
+    elif saved_fit and display_samples:
         if has_mismatch:
             status_alert = f"""
             <div class="alert alert-warning d-flex align-items-center mb-4" role="alert">
@@ -268,6 +281,7 @@ def render_fit_results_html(source, fit_run=False, p_guess=None, k_guess=None, v
                 </div>
             </div>
             """
+
 
     # Generate guesses form
     p_val = f'value="{p_guess}"' if p_guess is not None else ''
@@ -527,15 +541,14 @@ class SourceViewPage(Page):
                 if saved_fit and not fit_run and not has_mismatch and saved_fit.plot_html:
                     return saved_fit.plot_html
 
-                from app.fitting import get_fit_results
-                fit_samples, _ = get_fit_results(
+                fit_samples, _ = get_request_cached_fit(
                     source,
-                    force_run=fit_run,
-                    p_guess=p_guess,
-                    k_guess=k_guess,
-                    v0_guess=v0_guess,
-                    e_guess=e_guess,
-                    user=request.user
+                    request,
+                    fit_run,
+                    p_guess,
+                    k_guess,
+                    v0_guess,
+                    e_guess
                 )
                 figure = get_rv_plot(source, fit_samples=fit_samples, user=request.user)
 
@@ -574,7 +587,7 @@ class SourceViewPage(Page):
                 k_guess=k_guess,
                 v0_guess=v0_guess,
                 e_guess=e_guess,
-                user=request.user
+                request=request
             )
 
 
