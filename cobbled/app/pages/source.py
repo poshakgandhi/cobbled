@@ -21,12 +21,14 @@ def render_fit_parameters_table(parameters) -> str:
     rows = ""
     for p in parameters:
         unit_str = f" ({p['unit']})" if p['unit'] else ""
+        err_str = f"± {p['err']}" if p['err'] != 'N/A' else "—"
+        ci_str = p['ci'] if p['ci'] != 'N/A' else "—"
         rows += f"""
         <tr>
             <td><strong>{p['name']}</strong>{unit_str}</td>
             <td><code>{p['val']}</code></td>
-            <td><code>± {p['err']}</code></td>
-            <td><code>{p['ci']}</code></td>
+            <td><code>{err_str}</code></td>
+            <td><code>{ci_str}</code></td>
         </tr>
         """
     return f"""

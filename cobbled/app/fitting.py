@@ -143,6 +143,12 @@ def run_joker_fit(source, prior_samples=100000, p_guess=None, k_guess=None, v0_g
     if len(samples) == 0:
         return None, []
 
+    # Sort samples by unmarginalized log-likelihood descending (so index 0 is always the MAP/best-fit)
+    ln_likes = samples.ln_unmarginalized_likelihood(data)
+    sort_idx = np.argsort(ln_likes)[::-1]
+    samples = samples[sort_idx]
+    ln_likes = ln_likes[sort_idx]
+
     sample_arrays = {}
     for k in ['P', 'e', 'omega', 'K', 'v0']:
         v = samples[k]
@@ -156,7 +162,6 @@ def run_joker_fit(source, prior_samples=100000, p_guess=None, k_guess=None, v0_g
     # f(m) = 1.03606e-7 * P * |K|^3 * (1 - e^2)^1.5
     f_m_vals = 1.03606e-7 * sample_arrays['P'] * (np.abs(sample_arrays['K']) ** 3) * ((1.0 - sample_arrays['e'] ** 2) ** 1.5)
     sample_arrays['f_m'] = f_m_vals
-
 
     parameters = []
     names = {
@@ -194,6 +199,44 @@ def run_joker_fit(source, prior_samples=100000, p_guess=None, k_guess=None, v0_g
             "ci": ci_str
         })
 
+    # Calculate Chi-squared and degrees of freedom for the best orbit (index 0)
+    best_orbit = samples.get_orbit(0)
+    rv_model = best_orbit.radial_velocity(t).to(u.km/u.s).value
+    chi2 = np.sum(((df["radial_velocity"].values - rv_model) / df["radial_velocity_error"].values) ** 2)
+    dof = len(df) - 6
+    chi2_red = chi2 / dof if dof > 0 else np.nan
+
+    # Append Goodness-of-Fit stats to parameters
+    parameters.append({
+        "name": "Max Log-Likelihood (ln L_max)",
+        "unit": "",
+        "val": f"{ln_likes[0]:.2f}",
+        "err": "N/A",
+        "ci": "N/A"
+    })
+    chi2_val_str = f"{chi2:.2f} / {dof}" if dof > 0 else f"{chi2:.2f} / 0"
+    parameters.append({
+        "name": "Chi-squared (χ² / d.o.f.)",
+        "unit": "",
+        "val": chi2_val_str,
+        "err": "N/A",
+        "ci": "N/A"
+    })
+    chi2_red_val = f"{chi2_red:.2f}" if dof > 0 else "N/A"
+    parameters.append({
+        "name": "Reduced Chi-squared (χ²_red)",
+        "unit": "",
+        "val": chi2_red_val,
+        "err": "N/A",
+        "ci": "N/A"
+    })
+    parameters.append({
+        "name": "Accepted Orbit Samples",
+        "unit": "",
+        "val": f"{len(samples)}",
+        "err": "N/A",
+        "ci": "N/A"
+    })
 
     # Persist the fit results directly to the database
     data_hash = get_rv_data_hash(df)
@@ -207,6 +250,7 @@ def run_joker_fit(source, prior_samples=100000, p_guess=None, k_guess=None, v0_g
     )
 
     return samples, parameters
+
 
 
 def get_fit_results(source, force_run=False, p_guess=None, k_guess=None, v0_guess=None, e_guess=None, user=None):
