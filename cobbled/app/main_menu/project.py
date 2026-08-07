@@ -116,7 +116,7 @@ class DynamicProjectsMenu(M):
             my_projects_folder = M(
                 display_name="My Projects",
                 icon="folder-user",
-                url="#",
+                url=lambda **_: "#",
                 view=folder_dummy_view,
                 items=my_proj_items,
             )
@@ -135,7 +135,7 @@ class DynamicProjectsMenu(M):
             comm_projects_folder = M(
                 display_name="Community Projects",
                 icon="folder-open",
-                url="#",
+                url=lambda **_: "#",
                 view=folder_dummy_view,
                 items=comm_proj_items,
             )
@@ -154,7 +154,7 @@ class DynamicProjectsMenu(M):
             independent_menu = M(
                 display_name="Independent Sources",
                 icon="tags",
-                url="#",
+                url=lambda **_: "#",
                 view=folder_dummy_view,
                 items=other_items,
             )
