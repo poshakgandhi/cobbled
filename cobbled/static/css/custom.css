@@ -1,14 +1,17 @@
 /* Custom Styling for COBBLED Navigation Menu */
 
-/* Main Navigation Menu Container */
+/* Main Navigation Menu Sidebar Background - Slate Grey */
+.main-sidebar,
+.main-sidebar .sidebar,
 .main_menu {
+    background-color: #0f172a !important;
     padding-top: 0.5rem;
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
 
-/* Distinct Card Button Style for Navigation Items */
+/* Distinct Blue Card Button Style for Navigation Items */
 .main_menu a {
-    color: #e2e8f0 !important;
+    color: #ffffff !important;
     font-size: 0.95rem !important;
     font-weight: 600 !important;
     padding: 0.75rem 1.25rem !important;
@@ -17,55 +20,55 @@
     display: flex !important;
     align-items: center !important;
     gap: 0.75rem !important;
-    background-color: #1e293b !important; /* Solid dark slate button card */
-    border: 1px solid #334155 !important; /* Distinct light border */
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3) !important;
+    background-color: #0284c7 !important; /* Rich Blue Button */
+    border: 1px solid #38bdf8 !important; /* Sky Blue Border */
+    box-shadow: 0 2px 6px rgba(2, 132, 199, 0.35) !important;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
-/* Hover State - Distinct highlight and cyan/sky-blue border */
+/* Hover State - Deep Ocean Blue Highlight */
 .main_menu a:hover {
     color: #ffffff !important;
-    background-color: #334155 !important;
-    border-color: #38bdf8 !important;
+    background-color: #0369a1 !important;
+    border-color: #7dd3fc !important;
     text-decoration: none !important;
     transform: translateY(-1.5px) !important;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4) !important;
+    box-shadow: 0 4px 12px rgba(3, 105, 161, 0.5) !important;
 }
 
-/* Active State - Vibrant sky blue button */
+/* Active State - Sleek Slate Grey Card */
 .main_menu li.active > a,
 .main_menu li.is_active > a {
     color: #ffffff !important;
-    background-color: #0284c7 !important;
-    border-color: #38bdf8 !important;
+    background-color: #1e293b !important; /* Sleek Slate Grey */
+    border-color: #94a3b8 !important;
     font-weight: 700 !important;
-    box-shadow: 0 4px 12px rgba(2, 132, 199, 0.4) !important;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.5) !important;
 }
 
-/* Nested Submenu Item Buttons */
+/* Nested Submenu Item Buttons - Darker Blue Cards */
 .main_menu ul ul a {
     font-size: 0.88rem !important;
     padding: 0.55rem 1rem !important;
     margin: 0.25rem 0.85rem 0.25rem 0.25rem !important;
-    color: #cbd5e1 !important;
-    background-color: #0f172a !important; /* Darker distinct background for nested items */
-    border: 1px solid #1e293b !important;
+    color: #e0f2fe !important;
+    background-color: #075985 !important; /* Submenu Blue Card */
+    border: 1px solid #0284c7 !important;
     border-radius: 6px !important;
 }
 
 .main_menu ul ul a:hover {
     color: #ffffff !important;
-    background-color: #1e293b !important;
+    background-color: #0284c7 !important;
     border-color: #38bdf8 !important;
     transform: translateY(-1px) !important;
 }
 
 .main_menu ul ul li.active > a,
 .main_menu ul ul li.is_active > a {
-    color: #38bdf8 !important;
-    background-color: rgba(56, 189, 248, 0.15) !important;
-    border-color: #38bdf8 !important;
+    color: #ffffff !important;
+    background-color: #334155 !important; /* Slate Grey for Active Subitem */
+    border-color: #cbd5e1 !important;
 }
 
 /* Icon alignment and sizing */
@@ -77,14 +80,14 @@
     width: 1.25rem;
     text-align: center;
     font-size: 1rem;
-    opacity: 0.9;
-    color: #38bdf8 !important;
+    opacity: 0.95;
+    color: #ffffff !important;
 }
 
 .main_menu a:hover i,
 .main_menu a:hover svg {
     opacity: 1;
-    color: #ffffff !important;
+    color: #e0f2fe !important;
 }
 
 /* Submenu toggle arrows */
@@ -93,7 +96,8 @@
     margin-left: auto;
     font-size: 0.85rem;
     transition: transform 0.2s ease;
-    opacity: 0.7;
+    opacity: 0.85;
+    color: #ffffff;
 }
 
 .main_menu .treeview.menu-open > a::after {
@@ -106,7 +110,7 @@
     font-size: 0.72rem !important;
     text-transform: uppercase !important;
     letter-spacing: 0.08em !important;
-    color: #64748b !important;
+    color: #94a3b8 !important;
     padding: 0.85rem 1.25rem 0.35rem !important;
     font-weight: 700 !important;
 }
