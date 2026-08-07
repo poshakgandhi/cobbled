@@ -4,7 +4,7 @@ import django
 import csv
 
 # Set up Django environment
-sys.path.append("/soft/gaiacob/gaia-cob-pmp/gaia_cob_pmp")
+sys.path.append("/soft/cobbled/cobbled")
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "core.settings")
 django.setup()
 

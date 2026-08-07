@@ -2,19 +2,170 @@
 Submenu for items relating to projects.
 """
 
+from collections import defaultdict
 from django.db.models import Q
-from iommi import LAST
-from iommi.main_menu import M
+from iommi import LAST, M
+from iommi.main_menu import EXTERNAL
 
 from app.forms.project import ProjectForm
 from app.forms.proposal import ProposalForm
 from app.main_menu.proposal import proposal_submenu
-from app.models import Researcher
+from app.models import Project, Researcher, Source
 from app.pages.project import ProjectViewPage
 from app.tables.project import ProjectTable
 from app.tables.researcher import ResearcherTable
 
-project_submenu: M = M(
+
+class DynamicProjectsMenu(M):
+    def bind(self, request, root):
+        import copy
+
+        obj = copy.copy(self)
+        base_items = {}
+        for k in ["add", "view_all", "view"]:
+            if k in self.items:
+                base_items[k] = self.items[k]
+        obj.items = base_items
+
+        user = request.user
+        if not (user.is_authenticated and user.is_active):
+            return super(DynamicProjectsMenu, obj).bind(request, root)
+
+        # 1. Fetch all visible projects
+        all_projects = Project.objects.all()
+        visible_projects = [p for p in all_projects if user.has_perm("app.view_project", p)]
+
+        # Classify projects into My Projects vs Community Projects
+        my_projects = []
+        community_projects = []
+
+        researcher = getattr(user, "researcher", None)
+        for proj in visible_projects:
+            is_my_proj = False
+            if user.is_staff:
+                is_my_proj = True
+            elif researcher:
+                if proj.principal_investigator == researcher or proj.members.filter(pk=researcher.pk).exists():
+                    is_my_proj = True
+
+            if is_my_proj:
+                my_projects.append(proj)
+            else:
+                community_projects.append(proj)
+
+        # Pre-fetch all visible sources
+        if user.is_staff:
+            sources = Source.objects.all()
+        elif researcher:
+            sources = Source.objects.filter(Q(is_valid=True) | Q(created_by=researcher)).distinct()
+        else:
+            sources = Source.objects.filter(is_valid=True)
+
+        # Map sources to projects
+        project_sources = defaultdict(list)
+        assigned_source_pks = set()
+
+        for source in sources:
+            source_projects = Project.objects.filter(
+                Q(observation__project=source) | Q(observation__source=source) | Q(proposal__observation__source=source)
+            ).distinct()
+            source_visible_projects = [p for p in source_projects if p in visible_projects]
+            if source_visible_projects:
+                for proj in source_visible_projects:
+                    project_sources[proj].append(source)
+                    assigned_source_pks.add(source.pk)
+
+        unassigned_sources = [s for s in sources if s.pk not in assigned_source_pks]
+
+        def make_source_item(source):
+            return M(
+                display_name=source.name,
+                url=source.get_absolute_url(),
+                view=EXTERNAL,
+                icon="minus",
+            )
+
+        def make_project_menu_item(proj):
+            proj_sources = project_sources[proj]
+            proj_items = {}
+            for source in sorted(proj_sources, key=lambda s: s.name.lower()):
+                source_item = make_source_item(source)
+                source_item._set_name(f"source_{source.pk}")
+                proj_items[source_item.name] = source_item
+
+            return M(
+                display_name=proj.name,
+                icon="folder",
+                url=proj.get_absolute_url(),
+                view=EXTERNAL,
+                items=proj_items,
+            )
+
+        def folder_dummy_view(request, **kwargs):
+            from django.http import HttpResponse
+            return HttpResponse("")
+
+        # Folder A: My Projects
+        if my_projects:
+            my_proj_items = {}
+            for proj in sorted(my_projects, key=lambda p: p.name.lower()):
+                item = make_project_menu_item(proj)
+                item._set_name(f"my_proj_{proj.pk}")
+                my_proj_items[item.name] = item
+
+            my_projects_folder = M(
+                display_name="My Projects",
+                icon="folder-user",
+                url="#",
+                view=folder_dummy_view,
+                items=my_proj_items,
+            )
+            my_projects_folder.parent = obj
+            my_projects_folder._set_name("my_projects_group")
+            obj.items[my_projects_folder.name] = my_projects_folder
+
+        # Folder B: Community Projects
+        if community_projects:
+            comm_proj_items = {}
+            for proj in sorted(community_projects, key=lambda p: p.name.lower()):
+                item = make_project_menu_item(proj)
+                item._set_name(f"comm_proj_{proj.pk}")
+                comm_proj_items[item.name] = item
+
+            comm_projects_folder = M(
+                display_name="Community Projects",
+                icon="folder-open",
+                url="#",
+                view=folder_dummy_view,
+                items=comm_proj_items,
+            )
+            comm_projects_folder.parent = obj
+            comm_projects_folder._set_name("community_projects_group")
+            obj.items[comm_projects_folder.name] = comm_projects_folder
+
+        # Folder C: Independent / Community Sources
+        if unassigned_sources:
+            other_items = {}
+            for source in sorted(unassigned_sources, key=lambda s: s.name.lower()):
+                source_item = make_source_item(source)
+                source_item._set_name(f"source_{source.pk}")
+                other_items[source_item.name] = source_item
+
+            independent_menu = M(
+                display_name="Independent Sources",
+                icon="tags",
+                url="#",
+                view=folder_dummy_view,
+                items=other_items,
+            )
+            independent_menu.parent = obj
+            independent_menu._set_name("independent_sources_group")
+            obj.items[independent_menu.name] = independent_menu
+
+        return super(DynamicProjectsMenu, obj).bind(request, root)
+
+
+project_submenu: M = DynamicProjectsMenu(
     display_name="Projects",
     icon="diagram-project",
     include=lambda user, **_: user.is_authenticated and user.is_active,
@@ -22,6 +173,7 @@ project_submenu: M = M(
     items=dict(
         add=M(
             icon="plus",
+            display_name="New Project",
             include=lambda user, **_: user.has_perm("app.add_project"),
             view=ProjectForm.create(
                 fields=dict(
@@ -35,6 +187,12 @@ project_submenu: M = M(
                     ),
                 ),
             ),
+        ),
+        view_all=M(
+            display_name="Browse All Projects",
+            icon="table",
+            url="/project/",
+            view=ProjectTable().as_view(),
         ),
         view=M(
             display_name=lambda project, **_: str(project),
@@ -92,3 +250,4 @@ project_submenu: M = M(
         ),
     ),
 )
+

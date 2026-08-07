@@ -33,29 +33,41 @@ body {
     margin: 0 !important;
 }
 
+/* Modern Button-Style Menu Items */
 .main_menu a {
     color: #94a3b8 !important;
     font-size: 0.95rem !important;
     font-weight: 500 !important;
-    padding: 0.65rem 1.25rem !important;
-    border-radius: 8px !important;
-    margin: 0.2rem 1rem !important;
+    padding: 0.7rem 1.25rem !important;
+    border-radius: 10px !important;
+    margin: 0.35rem 1rem !important;
     display: flex !important;
     align-items: center !important;
     gap: 0.75rem !important;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    background-color: rgba(255, 255, 255, 0.03) !important;
+    border: 1px solid rgba(255, 255, 255, 0.04) !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15) !important;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
+/* Hover State - Nice elevation lift and subtle glow */
 .main_menu a:hover {
     color: #f8fafc !important;
-    background-color: #1e293b !important;
+    background-color: rgba(255, 255, 255, 0.08) !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
     text-decoration: none !important;
+    transform: translateY(-1.5px) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
 }
 
-.main_menu li.active > a {
-    color: #38bdf8 !important; /* Vibrant custom sky-blue for active */
-    background-color: #1e293b !important;
+/* Active State - Premium Gradient and Shadow */
+.main_menu li.active > a,
+.main_menu li.is_active > a {
+    color: #ffffff !important;
+    background: linear-gradient(135deg, #0284c7, #0369a1) !important;
+    border-color: transparent !important;
     font-weight: 600 !important;
+    box-shadow: 0 4px 12px rgba(2, 132, 199, 0.35) !important;
 }
 
 .main_menu h1 {
@@ -92,34 +104,57 @@ body {
     display: none !important;
 }
 
-/* Hide default open/close markers and style them clean */
+/* Hide default open/close markers */
 .main_menu .menu_open_close {
     display: none !important;
 }
 
-/* Indent nested submenu list */
+/* Sleek Folder Toggle Arrow on Right */
+.main_menu details > summary > a::after {
+    content: '▸' !important;
+    margin-left: auto !important;
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    opacity: 0.5 !important;
+    font-size: 1.1rem !important;
+    font-weight: bold !important;
+}
+
+.main_menu details[open] > summary > a::after {
+    transform: rotate(90deg) !important;
+}
+
+/* Indent nested submenu list with a thin tree line */
 .main_menu ul ul {
-    margin-left: 2rem !important;
-    padding-left: 0.5rem !important;
-    border-left: 1.5px solid #334155 !important;
+    margin-left: 1.8rem !important;
+    padding-left: 0.4rem !important;
+    border-left: 1.5px solid #1e293b !important;
     margin-bottom: 0.5rem !important;
 }
 
+/* Submenu button items */
 .main_menu ul ul a {
     font-size: 0.88rem !important;
-    padding: 0.45rem 1rem !important;
-    margin: 0.1rem 1rem 0.1rem 0.25rem !important;
+    padding: 0.5rem 1rem !important;
+    margin: 0.15rem 1rem 0.15rem 0.25rem !important;
     color: #64748b !important;
+    background-color: rgba(255, 255, 255, 0.01) !important;
+    border: 1px solid rgba(255, 255, 255, 0.02) !important;
+    box-shadow: none !important;
 }
 
 .main_menu ul ul a:hover {
     color: #f8fafc !important;
-    background-color: #1e293b !important;
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    border-color: rgba(255, 255, 255, 0.06) !important;
+    transform: translateY(-1px) !important;
 }
 
-.main_menu ul ul li.active > a {
+.main_menu ul ul li.active > a,
+.main_menu ul ul li.is_active > a {
     color: #38bdf8 !important;
     background-color: rgba(56, 189, 248, 0.08) !important;
+    border-color: rgba(56, 189, 248, 0.2) !important;
+    box-shadow: none !important;
 }
 
 /* Typography Headings */

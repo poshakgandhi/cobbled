@@ -118,6 +118,7 @@ class DynamicSourcesMenu(M):
 
 
 source_submenu: M = DynamicSourcesMenu(
+    render=False,
     display_name="Sources",
     icon="sun",
     include=lambda user, **_: user.is_authenticated and user.is_active,

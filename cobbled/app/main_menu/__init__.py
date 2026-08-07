@@ -23,6 +23,7 @@ main_menu = MainMenu(
             url="/",
             view=IndexPage().as_view(),
         ),
+        project=project_submenu,
         source=source_submenu,
         upload=M(
             display_name="Upload Data",
@@ -34,10 +35,7 @@ main_menu = MainMenu(
         instrument=instrument_submenu,
         researcher=researcher_submenu,
         # ---------------- This just adds a bar into the menu ----------------
-        separator_1=M(view=EXTERNAL, template="app/main_menu/spacer.html"),
-        project=project_submenu,
-        # ---------------- This just adds a bar into the menu ----------------
-        separator_2=M(
+        separator_1=M(
             include=lambda user, **_: user.is_authenticated,
             template="app/main_menu/spacer.html",
             view=EXTERNAL,

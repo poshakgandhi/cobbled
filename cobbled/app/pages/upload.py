@@ -393,7 +393,7 @@ class UploadPage(Page):
             project=Field.choice_queryset(
                 choices=Project.objects.filter(is_valid=True),
                 required=False,
-                help_text="Optional. Default project to attribute these observations to if not specified in YAML."
+                help_text="Recommended. Target project to associate these observations and sources with in the navigation hierarchy."
             ),
             source=Field.choice_queryset(
                 model=Source,
