@@ -67,7 +67,7 @@ class DynamicProjectsMenu(M):
 
         for source in sources:
             source_projects = Project.objects.filter(
-                Q(observation__project=source) | Q(observation__source=source) | Q(proposal__observation__source=source)
+                Q(observation__source=source) | Q(proposal__observation__source=source)
             ).distinct()
             source_visible_projects = [p for p in source_projects if p in visible_projects]
             if source_visible_projects:
@@ -97,7 +97,7 @@ class DynamicProjectsMenu(M):
                 display_name=proj.name,
                 icon="folder",
                 url=proj.get_absolute_url(),
-                view=EXTERNAL,
+                view=folder_dummy_view,
                 items=proj_items,
             )
 
