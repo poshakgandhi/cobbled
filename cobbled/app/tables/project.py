@@ -26,7 +26,7 @@ class ProjectTable(Table):
                 ),
             ),
             principal_investigator=dict(
-                cell__url=lambda row, **_: row.principal_investigator.get_absolute_url(),
+                cell__url=lambda row, **_: row.principal_investigator.get_absolute_url() if row.principal_investigator else None,
                 filter=dict(  # Enables free-text search on the column names
                     include=True,
                     freetext=True,
