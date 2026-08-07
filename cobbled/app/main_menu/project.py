@@ -77,6 +77,10 @@ class DynamicProjectsMenu(M):
 
         unassigned_sources = [s for s in sources if s.pk not in assigned_source_pks]
 
+        def folder_dummy_view(request, **kwargs):
+            from django.http import HttpResponse
+            return HttpResponse("")
+
         def make_source_item(source):
             return M(
                 display_name=source.name,
@@ -96,14 +100,10 @@ class DynamicProjectsMenu(M):
             return M(
                 display_name=proj.name,
                 icon="folder",
-                url=proj.get_absolute_url(),
+                url=lambda proj_val=proj, **_: proj_val.get_absolute_url(),
                 view=folder_dummy_view,
                 items=proj_items,
             )
-
-        def folder_dummy_view(request, **kwargs):
-            from django.http import HttpResponse
-            return HttpResponse("")
 
         # Folder A: My Projects
         if my_projects:
