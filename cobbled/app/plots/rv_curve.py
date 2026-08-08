@@ -34,7 +34,8 @@ def load_rv_data(source: Source, user=None) -> pd.DataFrame:
             researcher = getattr(user, "researcher", None)
             if researcher:
                 qset = qset.filter(
-                    Q(is_valid=True) |
+                    Q(observation__is_community=True) |
+                    Q(observation__is_valid=True, is_valid=True) |
                     Q(observation__observer=researcher) |
                     Q(observation__project__principal_investigator=researcher) |
                     Q(observation__project__members=researcher) |
@@ -42,9 +43,15 @@ def load_rv_data(source: Source, user=None) -> pd.DataFrame:
                     Q(observation__proposal__project__members=researcher)
                 ).distinct()
             else:
-                qset = qset.filter(is_valid=True)
+                qset = qset.filter(
+                    Q(observation__is_community=True) |
+                    Q(observation__is_valid=True, is_valid=True)
+                )
     else:
-        qset = qset.filter(is_valid=True)
+        qset = qset.filter(
+            Q(observation__is_community=True) |
+            Q(observation__is_valid=True, is_valid=True)
+        )
 
     qset = qset.annotate(jd=F("observation__jd"))
 

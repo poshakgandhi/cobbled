@@ -603,13 +603,36 @@ def render_observations_table_html(source, request) -> str:
     from app.models import Observation, Project
     from app.models.observation import is_linked_project_member
 
+    user = request.user if request else None
+    csrf_token = get_token(request) if request else ""
+
+    from django.db.models import Q
+
     observations = source.observation_set.filter(
         jd__isnull=False,
         dataset__radial_velocity__isnull=False
-    ).select_related("dataset", "observer__user", "project").order_by("jd")
+    )
 
-    user = request.user if request else None
-    csrf_token = get_token(request) if request else ""
+    if user and user.is_authenticated:
+        if not user.is_staff:
+            researcher = getattr(user, "researcher", None)
+            if researcher:
+                observations = observations.filter(
+                    Q(is_community=True) | Q(is_valid=True) |
+                    Q(observer=researcher) |
+                    Q(project__principal_investigator=researcher) |
+                    Q(project__members=researcher)
+                ).distinct()
+            else:
+                observations = observations.filter(
+                    Q(is_community=True) | Q(is_valid=True)
+                )
+    else:
+        observations = observations.filter(
+            Q(is_community=True) | Q(is_valid=True)
+        )
+
+    observations = observations.select_related("dataset", "observer__user", "project").order_by("jd")
 
     # Calculate default metadata for the inline row append
     next_id = (Observation.objects.aggregate(max_id=Max("id"))["max_id"] or 0) + 1
