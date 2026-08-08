@@ -1,19 +1,22 @@
 /* Custom Styling for COBBLED Navigation Menu with Multi-Level Visual Hierarchy */
 
 /* =========================================================
-   GLARING VERIFICATION MARKER
+   GLARING VERIFICATION MARKER AT TOP OF MENU
    ========================================================= */
-.main-sidebar::before {
-    content: "⚡ COBBLED v2.5 PROJECT-FIRST UI ⚡";
-    display: block;
-    background: #f59e0b !important; /* Glaring Bright Amber/Gold */
-    color: #0f172a !important;
-    font-weight: 800 !important;
-    font-size: 0.72rem !important;
+.main_menu::before {
+    content: "🔥 VERIFIED COBBLED v2.6 ACTIVE 🔥" !important;
+    display: block !important;
+    background: #ec4899 !important; /* Glaring Neon Pink / Magenta */
+    color: #ffffff !important;
+    font-weight: 900 !important;
+    font-size: 0.82rem !important;
     text-align: center !important;
-    padding: 0.4rem 0.5rem !important;
-    letter-spacing: 0.06em !important;
-    box-shadow: 0 2px 6px rgba(245, 158, 11, 0.4) !important;
+    padding: 0.6rem 0.5rem !important;
+    margin: 0.4rem 0.6rem 0.8rem 0.6rem !important;
+    border-radius: 8px !important;
+    letter-spacing: 0.08em !important;
+    box-shadow: 0 0 12px rgba(236, 72, 153, 0.8) !important;
+    border: 2px solid #f472b6 !important;
 }
 
 /* Main Navigation Menu Sidebar Background */
@@ -65,29 +68,28 @@
 }
 
 /* =========================================================
-   EXPANDED 28% RIGHT-HAND DROPDOWN TOGGLE ZONE
-   Summary elements with sub-items get a dedicated 28% right click zone.
+   EXPANDED 30% RIGHT-HAND DROPDOWN TOGGLE ZONE
    ========================================================= */
 .main_menu summary > a {
-    padding-right: 3.8rem !important; /* Leave room for right 28% dropdown zone */
+    padding-right: 4.2rem !important; /* Leave room for right 30% dropdown zone */
 }
 
-/* Right 28% Dropdown Toggle Button Zone */
+/* Right 30% Dropdown Toggle Button Zone */
 .main_menu summary::after {
     content: "▾ OPEN" !important;
     position: absolute !important;
     right: 0.6rem !important;
     top: 50% !important;
     transform: translateY(-50%) !important;
-    width: 28% !important; /* Expands dropdown click zone to right ~28% of button width */
-    height: 72% !important;
+    width: 30% !important; /* Expands dropdown click zone to right ~30% of button width */
+    height: 75% !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    background: rgba(245, 158, 11, 0.25) !important; /* Distinct Amber Zone */
-    border: 1.5px solid #f59e0b !important; /* Glaring Gold Border */
+    background: rgba(245, 158, 11, 0.3) !important; /* Distinct Amber Zone */
+    border: 2px solid #f59e0b !important; /* Glaring Gold Border */
     border-radius: 6px !important;
-    font-size: 0.7rem !important;
+    font-size: 0.72rem !important;
     font-weight: 800 !important;
     color: #fbbf24 !important;
     pointer-events: none !important; /* Clicks pass directly to <summary> to toggle <details> */
@@ -96,24 +98,23 @@
 }
 
 .main_menu summary:hover::after {
-    background: rgba(245, 158, 11, 0.45) !important;
+    background: rgba(245, 158, 11, 0.5) !important;
     color: #ffffff !important;
-    box-shadow: 0 0 8px rgba(245, 158, 11, 0.6) !important;
+    box-shadow: 0 0 10px rgba(245, 158, 11, 0.7) !important;
 }
 
 .main_menu details[open] > summary::after {
     content: "▴ CLOSE" !important;
-    background: rgba(56, 189, 248, 0.25) !important; /* Sky Blue when open */
+    background: rgba(56, 189, 248, 0.3) !important; /* Sky Blue when open */
     border-color: #38bdf8 !important;
     color: #38bdf8 !important;
 }
 
 .main_menu details[open] > summary:hover::after {
-    background: rgba(56, 189, 248, 0.45) !important;
+    background: rgba(56, 189, 248, 0.5) !important;
     color: #ffffff !important;
-    box-shadow: 0 0 8px rgba(56, 189, 248, 0.6) !important;
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.7) !important;
 }
-
 
 /* =========================================================
    LEVEL 1: Top-Level Menu Buttons (Projects, Upload, etc.)

@@ -89,7 +89,7 @@ class DynamicProjectsMenu(M):
             return M(
                 display_name=proj.name,
                 icon="folder",
-                url=lambda proj_val=proj, **_: proj_val.get_absolute_url(),
+                url=lambda **_: "javascript:void(0)",
                 view=folder_dummy_view,
                 items=proj_items,
             )
@@ -107,7 +107,7 @@ class DynamicProjectsMenu(M):
             my_projects_folder = M(
                 display_name="My Projects",
                 icon="folder-user",
-                url=lambda **_: "#",
+                url=lambda **_: "javascript:void(0)",
                 view=folder_dummy_view,
                 items=my_proj_items,
             )
@@ -135,7 +135,7 @@ class DynamicProjectsMenu(M):
             comm_projects_folder = M(
                 display_name="Community Projects",
                 icon="folder-open",
-                url=lambda **_: "#",
+                url=lambda **_: "javascript:void(0)",
                 view=folder_dummy_view,
                 items=comm_proj_items,
             )
@@ -155,7 +155,7 @@ class DynamicProjectsMenu(M):
             independent_menu = M(
                 display_name="Independent Sources",
                 icon="tags",
-                url=lambda **_: "#",
+                url=lambda **_: "javascript:void(0)",
                 view=folder_dummy_view,
                 items=other_items,
             )
