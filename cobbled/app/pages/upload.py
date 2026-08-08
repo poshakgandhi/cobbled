@@ -86,6 +86,26 @@ def parse_yaml_csv_data(text_content, user, default_source=None, default_project
             if not is_member:
                 raise ValueError(f"You do not have permission to add observations to project '{project.name}'.")
 
+    # If no project was specified, auto-assign to 'Test Project X' under My Projects
+    if not project:
+        researcher = getattr(user, "researcher", None) if user else None
+        if not researcher and user and user.is_staff:
+            from app.models import Researcher
+            researcher = Researcher.objects.first()
+
+        existing_names = set(Project.objects.values_list("name", flat=True))
+        x = 1
+        while f"Test Project {x}" in existing_names:
+            x += 1
+
+        auto_project_name = f"Test Project {x}"
+        project = Project.objects.create(
+            name=auto_project_name,
+            description=f"Auto-created test project for upload by {user.username if user else 'user'}",
+            principal_investigator=researcher,
+            is_valid=True
+        )
+
     # Resolve proposal if specified
     proposal = None
     if proposal_id:

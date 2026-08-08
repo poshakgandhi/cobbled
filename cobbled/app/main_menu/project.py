@@ -116,15 +116,7 @@ class DynamicProjectsMenu(M):
             bound_folder.parent = obj
             new_items[my_projects_folder.name] = bound_folder
 
-        # 2. Browse All Projects
-        if "view_all" in obj.items:
-            new_items["view_all"] = obj.items["view_all"]
-
-        # 3. New Project
-        if "add" in obj.items:
-            new_items["add"] = obj.items["add"]
-
-        # 4. Community Projects
+        # 2. Community Projects
         if community_projects:
             comm_proj_items = {}
             for proj in sorted(community_projects, key=lambda p: p.name.lower()):
@@ -144,7 +136,7 @@ class DynamicProjectsMenu(M):
             bound_comm_folder.parent = obj
             new_items[comm_projects_folder.name] = bound_comm_folder
 
-        # 5. Independent Sources
+        # 3. Independent Sources
         if unassigned_sources:
             other_items = {}
             for source in sorted(unassigned_sources, key=lambda s: s.name.lower()):
@@ -163,6 +155,14 @@ class DynamicProjectsMenu(M):
             bound_indep_menu = independent_menu.bind(request=request, root=root)
             bound_indep_menu.parent = obj
             new_items[independent_menu.name] = bound_indep_menu
+
+        # 4. Browse All Projects
+        if "view_all" in obj.items:
+            new_items["view_all"] = obj.items["view_all"]
+
+        # 5. New Project
+        if "add" in obj.items:
+            new_items["add"] = obj.items["add"]
 
         # Preserve routing view
         if "view" in obj.items:
