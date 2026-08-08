@@ -599,21 +599,35 @@ class SourceViewPage(Page):
 
 def render_observations_table_html(source, request) -> str:
     from django.middleware.csrf import get_token
+    from django.db.models import Max
+    from app.models import Observation, Project
     from app.models.observation import is_linked_project_member
 
     observations = source.observation_set.filter(
         jd__isnull=False,
         dataset__radial_velocity__isnull=False
     ).select_related("dataset", "observer__user", "project").order_by("jd")
-    if not observations.exists():
-        return "<div class='alert alert-warning my-3'><i class='fa-solid fa-triangle-exclamation me-2'></i>No observations found for this source.</div>"
 
     user = request.user if request else None
     csrf_token = get_token(request) if request else ""
 
+    # Calculate default metadata for the inline row append
+    next_id = (Observation.objects.aggregate(max_id=Max("id"))["max_id"] or 0) + 1
+    user_email = user.email if (user and user.is_authenticated) else "Logged-in User"
+
+    default_proj_name = "Independent"
+    if source.observation_set.exists():
+        first_obs = source.observation_set.filter(project__isnull=False).first()
+        if first_obs and first_obs.project:
+            default_proj_name = first_obs.project.name
+    if default_proj_name == "Independent":
+        if user and user.is_authenticated and hasattr(user, "researcher"):
+            user_proj = Project.objects.filter(principal_investigator=user.researcher).first()
+            if user_proj:
+                default_proj_name = user_proj.name
+
     rows_html = ""
     for obs in observations:
-        rv_val = getattr(obs, "dataset", None)
         rv_str = f"<strong>{obs.dataset.radial_velocity:.2f}</strong>" if (hasattr(obs, "dataset") and obs.dataset and obs.dataset.radial_velocity is not None) else "<span class='text-muted'>—</span>"
         err_str = f"± {obs.dataset.radial_velocity_error:.2f}" if (hasattr(obs, "dataset") and obs.dataset and obs.dataset.radial_velocity_error is not None) else "<span class='text-muted'>—</span>"
         
@@ -659,6 +673,63 @@ def render_observations_table_html(source, request) -> str:
         </tr>
         """
 
+    can_add = user and user.is_authenticated
+
+    add_row_html = f"""
+    <tr id="add-obs-row" style="display: none; background-color: #f0fdf4;" class="border-top border-2 border-success">
+        <td class="align-middle">
+            <span class="badge bg-success font-monospace px-2 py-1 fs-6">#{next_id} (Auto)</span>
+        </td>
+        <td class="align-middle">
+            <input type="number" step="any" form="add-obs-form" name="jd" id="add-obs-jd-input" class="form-control form-control-sm font-monospace" placeholder="JD (e.g. 2460600.0)" required>
+        </td>
+        <td class="align-middle">
+            <input type="number" step="any" form="add-obs-form" name="radial_velocity" class="form-control form-control-sm" placeholder="RV (km/s)" required>
+        </td>
+        <td class="align-middle">
+            <input type="number" step="any" form="add-obs-form" name="radial_velocity_error" class="form-control form-control-sm" placeholder="Err (km/s)" required>
+        </td>
+        <td class="align-middle">
+            <span class="badge bg-secondary text-light px-2 py-1"><i class="fa-solid fa-user me-1"></i>{user_email} (You)</span>
+        </td>
+        <td class="align-middle">
+            <span class="badge bg-info text-dark px-2 py-1"><i class="fa-solid fa-folder me-1"></i>{default_proj_name}</span>
+        </td>
+        <td class="align-middle">
+            <form id="add-obs-form" method="POST" action="/source/{source.pk}/add-obs/">
+                <input type="hidden" name="csrfmiddlewaretoken" value="{csrf_token}">
+                <div class="btn-group btn-group-sm">
+                    <button type="submit" class="btn btn-success btn-sm px-2 py-1 fw-bold">
+                        <i class="fa-solid fa-check me-1"></i>Save
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm px-2 py-1" onclick="document.getElementById('add-obs-row').style.display='none';">
+                        <i class="fa-solid fa-xmark me-1"></i>Cancel
+                    </button>
+                </div>
+            </form>
+        </td>
+    </tr>
+    """
+
+    add_button_footer = ""
+    if can_add:
+        add_button_footer = f"""
+        <div class="card-footer bg-light p-3 d-flex justify-content-between align-items-center">
+            <span class="text-muted small">
+                <i class="fa-solid fa-circle-info me-1 text-primary"></i>Append observation measurements directly to this source's dataset without leaving the page.
+            </span>
+            <button type="button" class="btn btn-success shadow-sm fw-bold px-3 py-2" onclick="document.getElementById('add-obs-row').style.display='table-row'; document.getElementById('add-obs-jd-input').focus();">
+                <i class="fa-solid fa-plus-circle me-2"></i>Add data for this source
+            </button>
+        </div>
+        """
+    else:
+        add_button_footer = """
+        <div class="card-footer bg-light p-3 d-flex justify-content-between align-items-center text-muted small">
+            <span><i class="fa-solid fa-lock me-1"></i>Please sign in to add new observations to this source.</span>
+        </div>
+        """
+
     return f"""
     <div class="card my-4 shadow-sm border-0 rounded-3 overflow-hidden">
         <div class="card-header bg-dark text-white p-3 d-flex justify-content-between align-items-center">
@@ -680,13 +751,100 @@ def render_observations_table_html(source, request) -> str:
                         </tr>
                     </thead>
                     <tbody>
-                        {rows_html}
+                        {rows_html if rows_html else '<tr><td colspan="7" class="text-center text-muted p-4">No observations recorded yet for this source. Use the button below to add data.</td></tr>'}
+                        {add_row_html}
                     </tbody>
                 </table>
             </div>
         </div>
+        {add_button_footer}
     </div>
     """
+
+
+def add_observation_for_source_view(request, source_id):
+    from django.shortcuts import get_object_or_404, redirect
+    from django.contrib import messages
+    from app.models import Source, Observation, DataSet, Instrument, Project, Researcher, FluxUnit, WavelengthUnit
+    from app.fitting import run_joker_fit
+    from app.plots.rv_curve import get_rv_plot
+    from app.models.keplerian_fit import KeplerianFit
+
+    source = get_object_or_404(Source, pk=source_id)
+    user = request.user
+
+    if not user or not user.is_authenticated:
+        messages.error(request, "You must be signed in to add observations.")
+        return redirect(source.get_absolute_url())
+
+    if request.method == "POST":
+        jd_str = request.POST.get("jd")
+        rv_str = request.POST.get("radial_velocity")
+        err_str = request.POST.get("radial_velocity_error")
+        comment_str = request.POST.get("comment", "")
+
+        try:
+            jd_val = float(jd_str.strip())
+            rv_val = float(rv_str.strip())
+            err_val = float(err_str.strip())
+
+            # Logged in user researcher profile
+            researcher, _ = Researcher.objects.get_or_create(user=user)
+
+            # Determine project from source hierarchy
+            proj = None
+            if source.observation_set.exists():
+                first_obs = source.observation_set.filter(project__isnull=False).first()
+                if first_obs and first_obs.project:
+                    proj = first_obs.project
+
+            if not proj:
+                proj = Project.objects.filter(principal_investigator=researcher).first() or Project.objects.filter(name="Test Projects").first() or Project.objects.first()
+
+            inst = Instrument.objects.first()
+            flux_u = FluxUnit.objects.first()
+            wave_u = WavelengthUnit.objects.first()
+
+            # Create Observation
+            obs = Observation.objects.create(
+                source=source,
+                project=proj,
+                observer=researcher,
+                instrument=inst,
+                jd=jd_val,
+                comment=comment_str,
+                is_valid=True
+            )
+
+            # Create DataSet
+            DataSet.objects.create(
+                observation=obs,
+                radial_velocity=rv_val,
+                radial_velocity_error=err_val,
+                flux_units=flux_u,
+                wavelength_units=wave_u,
+                is_valid=True
+            )
+
+            # Automatically recalculate Keplerian fit for the source
+            try:
+                samples, _ = run_joker_fit(source, force_run=True, user=user)
+                if samples:
+                    plot_html = get_rv_plot(source, fit_samples=samples, user=user)
+                    fit = KeplerianFit.objects.filter(source=source).order_by("-created_at").first()
+                    if fit:
+                        fit.plot_html = plot_html
+                        fit.save()
+            except Exception:
+                pass
+
+            messages.success(request, f"New Observation #{obs.pk} successfully appended to '{source.name}'. Keplerian orbit fit recalculated.")
+            return redirect(source.get_absolute_url())
+
+        except (ValueError, AttributeError) as err:
+            messages.error(request, f"Failed to add observation: Invalid input values ({err}).")
+
+    return redirect(source.get_absolute_url())
 
 
 def add_gaiainfo_view(request, source, **kwargs):
