@@ -9,6 +9,28 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/custom.css' %}">
+    
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('click', function(e) {
+            var summary = e.target.closest('.main_menu summary');
+            if (!summary) return;
+
+            var details = summary.parentElement;
+            if (!details || details.tagName !== 'DETAILS') return;
+
+            var rect = summary.getBoundingClientRect();
+            var clickX = e.clientX - rect.left;
+
+            // If click is within the right 35% dropdown toggle zone
+            if (clickX > rect.width * 0.65) {
+                e.preventDefault();
+                e.stopPropagation();
+                details.open = !details.open;
+            }
+        }, true);
+    });
+    </script>
 {% endblock iommi_head_contents_last %}
 
 {% block iommi_top %}
