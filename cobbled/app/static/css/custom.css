@@ -4,7 +4,7 @@
    GLARING VERIFICATION MARKER AT TOP OF MENU
    ========================================================= */
 .main_menu::before {
-    content: "🔥 VERIFIED COBBLED v2.8 ACTIVE 🔥" !important;
+    content: "🔥 VERIFIED COBBLED v2.9 ACTIVE 🔥" !important;
     display: block !important;
     background: #ec4899 !important; /* Glaring Neon Pink / Magenta */
     color: #ffffff !important;
