@@ -12,6 +12,64 @@
     
     <script>
     document.addEventListener('DOMContentLoaded', function() {
+        var MENU_STORAGE_KEY = 'cobbled_menu_states_v2.8';
+
+        function getDetailsId(details) {
+            var summary = details.querySelector('summary');
+            if (!summary) return null;
+            return summary.textContent.trim().replace(/\s+/g, ' ');
+        }
+
+        function loadSavedStates() {
+            try {
+                var raw = localStorage.getItem(MENU_STORAGE_KEY);
+                return raw ? (JSON.parse(raw) || {}) : {};
+            } catch(e) {
+                return {};
+            }
+        }
+
+        function saveState(id, isOpen) {
+            if (!id) return;
+            try {
+                var states = loadSavedStates();
+                states[id] = isOpen;
+                localStorage.setItem(MENU_STORAGE_KEY, JSON.stringify(states));
+            } catch(e) {}
+        }
+
+        // 1. Restore saved states from localStorage
+        var savedStates = loadSavedStates();
+        var allDetails = document.querySelectorAll('.main_menu details');
+        allDetails.forEach(function(details) {
+            var id = getDetailsId(details);
+            if (id && savedStates.hasOwnProperty(id)) {
+                details.open = savedStates[id];
+            }
+
+            details.addEventListener('toggle', function() {
+                var id = getDetailsId(details);
+                if (id) {
+                    saveState(id, details.open);
+                }
+            });
+        });
+
+        // 2. Auto-expand parent ancestors of the active page link
+        var currentPath = window.location.pathname;
+        var activeLinks = document.querySelectorAll('.main_menu a[href="' + currentPath + '"]');
+        activeLinks.forEach(function(link) {
+            var parentDetails = link.closest('details');
+            while (parentDetails) {
+                parentDetails.open = true;
+                var id = getDetailsId(parentDetails);
+                if (id) saveState(id, true);
+                var parentLi = parentDetails.parentElement;
+                parentDetails = parentLi ? parentLi.closest('details') : null;
+            }
+        });
+
+        // 3. Right-hand 35% dropdown toggle click handler
         document.addEventListener('click', function(e) {
             var summary = e.target.closest('.main_menu summary');
             if (!summary) return;
@@ -22,11 +80,12 @@
             var rect = summary.getBoundingClientRect();
             var clickX = e.clientX - rect.left;
 
-            // If click is within the right 35% dropdown toggle zone
             if (clickX > rect.width * 0.65) {
                 e.preventDefault();
                 e.stopPropagation();
                 details.open = !details.open;
+                var id = getDetailsId(details);
+                if (id) saveState(id, details.open);
             }
         }, true);
     });
