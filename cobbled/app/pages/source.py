@@ -601,7 +601,10 @@ def render_observations_table_html(source, request) -> str:
     from django.middleware.csrf import get_token
     from app.models.observation import is_linked_project_member
 
-    observations = source.observation_set.select_related("dataset", "observer__user", "project").order_by("jd")
+    observations = source.observation_set.filter(
+        jd__isnull=False,
+        dataset__radial_velocity__isnull=False
+    ).select_related("dataset", "observer__user", "project").order_by("jd")
     if not observations.exists():
         return "<div class='alert alert-warning my-3'><i class='fa-solid fa-triangle-exclamation me-2'></i>No observations found for this source.</div>"
 
