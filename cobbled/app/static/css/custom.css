@@ -1,6 +1,6 @@
-/* Custom Styling for COBBLED Navigation Menu */
+/* Custom Styling for COBBLED Navigation Menu with Multi-Level Visual Hierarchy */
 
-/* Main Navigation Menu Sidebar Background - Slate Grey */
+/* Main Navigation Menu Sidebar Background */
 .main-sidebar,
 .main-sidebar .sidebar,
 .main_menu {
@@ -9,66 +9,136 @@
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
 
-/* Distinct Blue Card Button Style for Navigation Items */
+/* Reset details/summary browser default indicators */
+.main_menu details {
+    width: 100%;
+}
+
+.main_menu summary {
+    list-style: none !important;
+    outline: none !important;
+}
+
+.main_menu summary::-webkit-details-marker {
+    display: none !important;
+}
+
+.main_menu .menu_open_close {
+    display: none !important;
+}
+
+.main_menu ul {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+}
+
+/* Base button styling */
 .main_menu a {
-    color: #ffffff !important;
-    font-size: 0.95rem !important;
-    font-weight: 600 !important;
-    padding: 0.75rem 1.25rem !important;
-    border-radius: 8px !important;
-    margin: 0.45rem 0.85rem !important;
     display: flex !important;
     align-items: center !important;
-    gap: 0.75rem !important;
-    background-color: #0284c7 !important; /* Rich Blue Button */
-    border: 1px solid #38bdf8 !important; /* Sky Blue Border */
-    box-shadow: 0 2px 6px rgba(2, 132, 199, 0.35) !important;
+    gap: 0.65rem !important;
+    border-radius: 8px !important;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.25) !important;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    text-decoration: none !important;
 }
 
-/* Hover State - Deep Ocean Blue Highlight */
-.main_menu a:hover {
+/* =========================================================
+   LEVEL 1: Top-Level Menu Buttons (Projects, Upload, etc.)
+   ========================================================= */
+.main_menu > ul > li > a,
+.main_menu > ul > li > details > summary > a {
     color: #ffffff !important;
+    font-size: 0.95rem !important;
+    font-weight: 700 !important;
+    padding: 0.75rem 1.15rem !important;
+    margin: 0.4rem 0.6rem !important;
+    background-color: #0284c7 !important; /* Primary Vibrant Blue */
+    border: 1px solid #38bdf8 !important;
+}
+
+.main_menu > ul > li > a:hover,
+.main_menu > ul > li > details > summary > a:hover {
     background-color: #0369a1 !important;
     border-color: #7dd3fc !important;
-    text-decoration: none !important;
     transform: translateY(-1.5px) !important;
-    box-shadow: 0 4px 12px rgba(3, 105, 161, 0.5) !important;
+    box-shadow: 0 4px 10px rgba(3, 105, 161, 0.4) !important;
 }
 
-/* Active State - Sleek Slate Grey Card */
-.main_menu li.active > a,
-.main_menu li.is_active > a {
-    color: #ffffff !important;
-    background-color: #1e293b !important; /* Sleek Slate Grey */
-    border-color: #94a3b8 !important;
-    font-weight: 700 !important;
-    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.5) !important;
+.main_menu > ul > li.is_active > a,
+.main_menu > ul > li.is_active > details > summary > a {
+    background-color: #0369a1 !important;
+    border-color: #38bdf8 !important;
+    box-shadow: 0 4px 12px rgba(2, 132, 199, 0.4) !important;
 }
 
-/* Nested Submenu Item Buttons - Darker Blue Cards */
-.main_menu ul ul a {
+/* =========================================================
+   LEVEL 2: Folder Submenus (My Projects, Browse All, etc.)
+   - Indented & Narrower in Width
+   ========================================================= */
+.main_menu > ul > li > details > ul > li > a,
+.main_menu > ul > li > details > ul > li > details > summary > a {
+    color: #f0f9ff !important;
     font-size: 0.88rem !important;
-    padding: 0.55rem 1rem !important;
-    margin: 0.25rem 0.85rem 0.25rem 0.25rem !important;
-    color: #e0f2fe !important;
-    background-color: #075985 !important; /* Submenu Blue Card */
+    font-weight: 600 !important;
+    padding: 0.6rem 1rem !important;
+    margin: 0.35rem 0.6rem 0.35rem 1.35rem !important; /* Indented left -> Narrower width */
+    background-color: #0369a1 !important; /* Secondary Ocean Blue */
     border: 1px solid #0284c7 !important;
-    border-radius: 6px !important;
+    border-left: 4px solid #38bdf8 !important; /* Left Accent Line */
 }
 
-.main_menu ul ul a:hover {
-    color: #ffffff !important;
+.main_menu > ul > li > details > ul > li > a:hover,
+.main_menu > ul > li > details > ul > li > details > summary > a:hover {
     background-color: #0284c7 !important;
+    border-color: #7dd3fc !important;
+    transform: translateY(-1px) !important;
+}
+
+/* =========================================================
+   LEVEL 3: Individual Projects (e.g. Test Projects)
+   - Further Indented & Even Narrower Width
+   ========================================================= */
+.main_menu > ul > li > details > ul > li > details > ul > li > a,
+.main_menu > ul > li > details > ul > li > details > ul > li > details > summary > a {
+    color: #e2e8f0 !important;
+    font-size: 0.83rem !important;
+    font-weight: 600 !important;
+    padding: 0.5rem 0.85rem !important;
+    margin: 0.25rem 0.6rem 0.25rem 2.2rem !important; /* Deeper indent -> Narrower width */
+    background-color: #1e293b !important; /* Slate Grey Card */
+    border: 1px solid #334155 !important;
+    border-left: 4px solid #0284c7 !important; /* Left Accent Line */
+}
+
+.main_menu > ul > li > details > ul > li > details > ul > li > a:hover,
+.main_menu > ul > li > details > ul > li > details > ul > li > details > summary > a:hover {
+    background-color: #334155 !important;
+    color: #ffffff !important;
     border-color: #38bdf8 !important;
     transform: translateY(-1px) !important;
 }
 
-.main_menu ul ul li.active > a,
-.main_menu ul ul li.is_active > a {
+/* =========================================================
+   LEVEL 4: Individual Sources (e.g. Test Source 1)
+   - Deepest Indent & Narrowest Width
+   ========================================================= */
+.main_menu > ul > li > details > ul > li > details > ul > li > details > ul > li > a {
+    color: #cbd5e1 !important;
+    font-size: 0.78rem !important;
+    font-weight: 500 !important;
+    padding: 0.45rem 0.75rem !important;
+    margin: 0.2rem 0.6rem 0.2rem 3.05rem !important; /* Deepest indent -> Narrowest width */
+    background-color: #0f172a !important; /* Midnight Navy Card */
+    border: 1px solid #1e293b !important;
+    border-left: 3px solid #38bdf8 !important; /* Cyan Bullet Accent */
+}
+
+.main_menu > ul > li > details > ul > li > details > ul > li > details > ul > li > a:hover {
+    background-color: #1e293b !important;
     color: #ffffff !important;
-    background-color: #334155 !important; /* Slate Grey for Active Subitem */
-    border-color: #cbd5e1 !important;
+    border-color: #38bdf8 !important;
 }
 
 /* Icon alignment and sizing */
@@ -77,40 +147,34 @@
 .main_menu .fa, 
 .main_menu .fas, 
 .main_menu .far {
-    width: 1.25rem;
+    width: 1.1rem;
     text-align: center;
-    font-size: 1rem;
-    opacity: 0.95;
-    color: #ffffff !important;
-}
-
-.main_menu a:hover i,
-.main_menu a:hover svg {
-    opacity: 1;
+    font-size: 0.9rem;
+    opacity: 0.9;
     color: #e0f2fe !important;
 }
 
-/* Submenu toggle arrows */
-.main_menu .treeview > a::after {
+/* Dropdown disclosure indicator arrows */
+.main_menu summary a::after {
     content: "▸";
     margin-left: auto;
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     transition: transform 0.2s ease;
     opacity: 0.85;
     color: #ffffff;
 }
 
-.main_menu .treeview.menu-open > a::after {
+.main_menu details[open] > summary > a::after {
     transform: rotate(90deg);
 }
 
 /* Separator styling */
 .main_menu .nav-header,
 .main_menu .dropdown-header {
-    font-size: 0.72rem !important;
+    font-size: 0.7rem !important;
     text-transform: uppercase !important;
     letter-spacing: 0.08em !important;
-    color: #94a3b8 !important;
+    color: #64748b !important;
     padding: 0.85rem 1.25rem 0.35rem !important;
     font-weight: 700 !important;
 }
