@@ -59,6 +59,10 @@ class Project(Model):
         default=False, help_text="Entries require approval by site staff before they are visible."
     )
 
+    is_community = BooleanField(
+        default=False, help_text="True if this is a public community project."
+    )
+
     def get_absolute_url(self) -> str:
         return f"/project/{self.pk}/"
 

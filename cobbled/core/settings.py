@@ -120,8 +120,21 @@ WSGI_APPLICATION: str = "core.wsgi.application"
 # django: Database
 # https://docs.djangoproject.com/en/1.7/ref/settings/#databases
 #################################################################################
-DEFAULT_AUTO_FIELD: str = "django.db.models.AutoField"
-DATABASE_PATH: Path = Path(config("DATABASE_PATH", default=str(BASE_DIR / "db.sqlite3")))
+import os
+import shutil
+
+PERSISTENT_DIR_CONFIG = config("PERSISTENT_DATA_DIR", default="/data" if os.path.exists("/data") and os.access("/data", os.W_OK) else str(BASE_DIR))
+PERSISTENT_DIR: Path = Path(PERSISTENT_DIR_CONFIG)
+
+DATABASE_PATH: Path = Path(config("DATABASE_PATH", default=str(PERSISTENT_DIR / "db.sqlite3")))
+
+# Auto-copy initial database seed to persistent storage if on persistent volume
+if PERSISTENT_DIR != BASE_DIR and not DATABASE_PATH.exists() and (BASE_DIR / "db.sqlite3").exists():
+    try:
+        shutil.copy2(BASE_DIR / "db.sqlite3", DATABASE_PATH)
+    except Exception:
+        pass
+
 DATABASES: dict[str, dict[str, str]] = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",  # We're using a SQLite one as it's easy for dev

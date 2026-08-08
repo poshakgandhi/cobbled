@@ -57,6 +57,10 @@ class Observation(Model):
         default=False, help_text="Entries require approval by site staff before they are visible."
     )
 
+    is_community = BooleanField(
+        default=False, help_text="True if this observation has been published/transferred to the public community tier."
+    )
+
     jd = FloatField(
         verbose_name="Observation date (JD)",
         help_text="The date and time of the observation, given in JD.",

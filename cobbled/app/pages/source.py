@@ -645,11 +645,23 @@ def render_observations_table_html(source, request) -> str:
 
         actions_html = ""
         if can_edit:
+            transfer_btn = ""
+            if not obs.is_community:
+                transfer_btn = f"""
+                <form method="POST" action="/obs/{obs.pk}/transfer/" style="display:inline;" onsubmit="return confirm('Transfer Observation #{obs.pk} to Community Projects? Original uploader credit will be preserved.');">
+                    <input type="hidden" name="csrfmiddlewaretoken" value="{csrf_token}">
+                    <button type="submit" class="btn btn-outline-success btn-sm px-2 py-1" title="Transfer Data Point to Community Tier">
+                        <i class="fa-solid fa-globe me-1"></i>Transfer
+                    </button>
+                </form>
+                """
+
             actions_html = f"""
             <div class="btn-group btn-group-sm" role="group">
                 <a href="/obs/{obs.pk}/edit/" class="btn btn-outline-primary btn-sm px-2 py-1" title="Edit Observation Date & RV Data">
                     <i class="fa-solid fa-pen-to-square me-1"></i>Edit
                 </a>
+                {transfer_btn}
                 <form method="POST" action="/obs/{obs.pk}/delete/" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete Observation #{obs.pk}?');">
                     <input type="hidden" name="csrfmiddlewaretoken" value="{csrf_token}">
                     <button type="submit" class="btn btn-outline-danger btn-sm px-2 py-1" title="Delete Data Point">
@@ -661,13 +673,15 @@ def render_observations_table_html(source, request) -> str:
         else:
             actions_html = "<span class='text-muted small'><i class='fa-solid fa-lock me-1'></i>Read Only</span>"
 
+        tier_badge = "<span class='badge bg-success text-white px-2 py-1 ms-1'><i class='fa-solid fa-globe me-1'></i>Community</span>" if obs.is_community else "<span class='badge bg-warning text-dark px-2 py-1 ms-1'><i class='fa-solid fa-user-lock me-1'></i>Draft</span>"
+
         rows_html += f"""
         <tr>
             <td class="fw-bold text-secondary">#{obs.pk}</td>
             <td>{jd_str}</td>
             <td>{rv_str}</td>
             <td><code>{err_str}</code></td>
-            <td><span class="badge bg-secondary text-light px-2 py-1"><i class="fa-solid fa-user me-1"></i>{observer_email}</span></td>
+            <td><span class="badge bg-secondary text-light px-2 py-1"><i class="fa-solid fa-user me-1"></i>{observer_email}</span>{tier_badge}</td>
             <td><span class="badge bg-info text-dark px-2 py-1"><i class="fa-solid fa-folder me-1"></i>{project_name}</span></td>
             <td>{actions_html}</td>
         </tr>
@@ -714,7 +728,7 @@ def render_observations_table_html(source, request) -> str:
     add_button_footer = ""
     if can_add:
         add_button_footer = f"""
-        <div class="card-footer bg-light p-3 d-flex justify-content-between align-items-center">
+        <div class="card-footer border-top border-secondary-subtle p-3 d-flex justify-content-between align-items-center">
             <span class="text-muted small">
                 <i class="fa-solid fa-circle-info me-1 text-primary"></i>Append observation measurements directly to this source's dataset without leaving the page.
             </span>
@@ -725,7 +739,7 @@ def render_observations_table_html(source, request) -> str:
         """
     else:
         add_button_footer = """
-        <div class="card-footer bg-light p-3 d-flex justify-content-between align-items-center text-muted small">
+        <div class="card-footer border-top border-secondary-subtle p-3 d-flex justify-content-between align-items-center text-muted small">
             <span><i class="fa-solid fa-lock me-1"></i>Please sign in to add new observations to this source.</span>
         </div>
         """

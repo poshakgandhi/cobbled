@@ -211,7 +211,8 @@ def delete_observation_view(request, obs_id):
     from django.contrib import messages
     from app.models import Observation
     from app.models.observation import is_linked_project_member
-    from app.fitting import run_joker_fit, get_rv_plot
+    from app.fitting import run_joker_fit
+    from app.plots.rv_curve import get_rv_plot
     from app.models.keplerian_fit import KeplerianFit
 
     obs = get_object_or_404(Observation, pk=obs_id)
@@ -242,4 +243,62 @@ def delete_observation_view(request, obs_id):
         return redirect(source.get_absolute_url())
 
     messages.error(request, "Invalid request method for deletion.")
+    return redirect(source.get_absolute_url())
+
+
+def transfer_observation_view(request, obs_id):
+    from django.shortcuts import get_object_or_404, redirect
+    from django.contrib import messages
+    from app.models import Observation, Project
+    from app.models.observation import is_linked_project_member
+    from app.fitting import run_joker_fit
+    from app.plots.rv_curve import get_rv_plot
+    from app.models.keplerian_fit import KeplerianFit
+
+    obs = get_object_or_404(Observation, pk=obs_id)
+    source = obs.source
+    user = request.user
+
+    can_transfer = user and user.is_authenticated and (user.is_staff or is_linked_project_member(user, obs))
+    if not can_transfer:
+        messages.error(request, "You do not have permission to transfer this observation to the community tier.")
+        return redirect(source.get_absolute_url())
+
+    if request.method == "POST":
+        # Get or create community project target
+        comm_proj = Project.objects.filter(is_community=True).first() or Project.objects.filter(name="Gaia BHs").first()
+        if not comm_proj:
+            comm_proj = Project.objects.create(
+                name="Community Projects",
+                description="Public community datasets contributed by researchers.",
+                is_community=True,
+                is_valid=True
+            )
+
+        obs.is_community = True
+        if obs.project and not obs.project.is_community:
+            obs.project = comm_proj
+        obs.save()
+
+        # Re-run Joker fit for source
+        try:
+            samples, _ = run_joker_fit(source, force_run=True, user=user)
+            if samples:
+                plot_html = get_rv_plot(source, fit_samples=samples, user=user)
+                fit = KeplerianFit.objects.filter(source=source).order_by("-created_at").first()
+                if fit:
+                    fit.plot_html = plot_html
+                    fit.save()
+        except Exception:
+            pass
+
+        observer_name = obs.observer.user.email if (obs.observer and obs.observer.user) else "User"
+        messages.success(
+            request,
+            f"Observation #{obs.pk} successfully transferred to Community Projects! "
+            f"Original uploader provenance credit preserved for {observer_name}."
+        )
+        return redirect(source.get_absolute_url())
+
+    messages.error(request, "Invalid request method for transfer.")
     return redirect(source.get_absolute_url())
