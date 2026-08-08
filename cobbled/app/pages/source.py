@@ -618,19 +618,15 @@ def render_observations_table_html(source, request) -> str:
             researcher = getattr(user, "researcher", None)
             if researcher:
                 observations = observations.filter(
-                    Q(is_community=True) | Q(is_valid=True) |
+                    Q(is_community=True) |
                     Q(observer=researcher) |
                     Q(project__principal_investigator=researcher) |
                     Q(project__members=researcher)
                 ).distinct()
             else:
-                observations = observations.filter(
-                    Q(is_community=True) | Q(is_valid=True)
-                )
+                observations = observations.filter(is_community=True)
     else:
-        observations = observations.filter(
-            Q(is_community=True) | Q(is_valid=True)
-        )
+        observations = observations.filter(is_community=True)
 
     observations = observations.select_related("dataset", "observer__user", "project").order_by("jd")
 
