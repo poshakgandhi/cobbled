@@ -482,6 +482,8 @@ class SourceViewPage(Page):
         include=lambda source, request, **_: source_has_rv_data(source, user=request.user)
     )
 
+    observations_panel = Template("{{ page.extra_evaluated.observations_table_html | safe }}")
+
     gaia_info = SourceGaiaInfoForm(
         auto__exclude=["is_valid", "source"],
         include=lambda source, **_: hasattr(
@@ -492,6 +494,10 @@ class SourceViewPage(Page):
     )
 
     class Meta:
+        @staticmethod
+        def extra_evaluated__observations_table_html(source, request, **_) -> str:
+            return render_observations_table_html(source, request)
+
         @staticmethod
         def extra_evaluated__vvg_plot(source, **_) -> str:
             """
@@ -589,6 +595,95 @@ class SourceViewPage(Page):
                 e_guess=e_guess,
                 request=request
             )
+
+
+def render_observations_table_html(source, request) -> str:
+    from django.middleware.csrf import get_token
+    from app.models.observation import is_linked_project_member
+
+    observations = source.observation_set.select_related("dataset", "observer__user", "project").order_by("jd")
+    if not observations.exists():
+        return "<div class='alert alert-warning my-3'><i class='fa-solid fa-triangle-exclamation me-2'></i>No observations found for this source.</div>"
+
+    user = request.user if request else None
+    csrf_token = get_token(request) if request else ""
+
+    rows_html = ""
+    for obs in observations:
+        rv_val = getattr(obs, "dataset", None)
+        rv_str = f"<strong>{obs.dataset.radial_velocity:.2f}</strong>" if (hasattr(obs, "dataset") and obs.dataset and obs.dataset.radial_velocity is not None) else "<span class='text-muted'>—</span>"
+        err_str = f"± {obs.dataset.radial_velocity_error:.2f}" if (hasattr(obs, "dataset") and obs.dataset and obs.dataset.radial_velocity_error is not None) else "<span class='text-muted'>—</span>"
+        
+        if obs.jd is not None:
+            is_future_date = obs.jd > 2461000.0
+            date_badge_cls = "bg-warning text-dark fw-bold" if is_future_date else "bg-light text-dark font-monospace"
+            jd_str = f"<span class='badge {date_badge_cls} px-2 py-1 fs-6'>{obs.jd:.4f}</span>"
+        else:
+            jd_str = "<span class='badge bg-danger text-light'>Missing Date</span>"
+
+        observer_email = obs.observer.user.email if (obs.observer and obs.observer.user) else "Unassigned"
+        project_name = obs.project.name if obs.project else "Independent"
+
+        can_edit = user and user.is_authenticated and (user.is_staff or is_linked_project_member(user, obs))
+
+        actions_html = ""
+        if can_edit:
+            actions_html = f"""
+            <div class="btn-group btn-group-sm" role="group">
+                <a href="/obs/{obs.pk}/edit/" class="btn btn-outline-primary btn-sm px-2 py-1" title="Edit Observation Date & RV Data">
+                    <i class="fa-solid fa-pen-to-square me-1"></i>Edit
+                </a>
+                <form method="POST" action="/obs/{obs.pk}/delete/" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete Observation #{obs.pk}?');">
+                    <input type="hidden" name="csrfmiddlewaretoken" value="{csrf_token}">
+                    <button type="submit" class="btn btn-outline-danger btn-sm px-2 py-1" title="Delete Data Point">
+                        <i class="fa-solid fa-trash me-1"></i>Delete
+                    </button>
+                </form>
+            </div>
+            """
+        else:
+            actions_html = "<span class='text-muted small'><i class='fa-solid fa-lock me-1'></i>Read Only</span>"
+
+        rows_html += f"""
+        <tr>
+            <td class="fw-bold text-secondary">#{obs.pk}</td>
+            <td>{jd_str}</td>
+            <td>{rv_str}</td>
+            <td><code>{err_str}</code></td>
+            <td><span class="badge bg-secondary text-light px-2 py-1"><i class="fa-solid fa-user me-1"></i>{observer_email}</span></td>
+            <td><span class="badge bg-info text-dark px-2 py-1"><i class="fa-solid fa-folder me-1"></i>{project_name}</span></td>
+            <td>{actions_html}</td>
+        </tr>
+        """
+
+    return f"""
+    <div class="card my-4 shadow-sm border-0 rounded-3 overflow-hidden">
+        <div class="card-header bg-dark text-white p-3 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 fw-bold"><i class="fa-solid fa-database me-2 text-warning"></i>Radial Velocity Observations & User Provenance</h5>
+            <span class="badge bg-primary fs-6">{observations.count()} Data Points</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover table-striped align-middle mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>ID</th>
+                            <th>Observation Date (JD)</th>
+                            <th>Radial Velocity (km/s)</th>
+                            <th>RV Error (km/s)</th>
+                            <th>User Provenance (Observer)</th>
+                            <th>Project</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {rows_html}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    """
 
 
 def add_gaiainfo_view(request, source, **kwargs):
