@@ -1,5 +1,21 @@
 /* Custom Styling for COBBLED Navigation Menu with Multi-Level Visual Hierarchy */
 
+/* =========================================================
+   GLARING VERIFICATION MARKER
+   ========================================================= */
+.main-sidebar::before {
+    content: "⚡ COBBLED v2.5 PROJECT-FIRST UI ⚡";
+    display: block;
+    background: #f59e0b !important; /* Glaring Bright Amber/Gold */
+    color: #0f172a !important;
+    font-weight: 800 !important;
+    font-size: 0.72rem !important;
+    text-align: center !important;
+    padding: 0.4rem 0.5rem !important;
+    letter-spacing: 0.06em !important;
+    box-shadow: 0 2px 6px rgba(245, 158, 11, 0.4) !important;
+}
+
 /* Main Navigation Menu Sidebar Background */
 .main-sidebar,
 .main-sidebar .sidebar,
@@ -17,6 +33,10 @@
 .main_menu summary {
     list-style: none !important;
     outline: none !important;
+    position: relative !important;
+    cursor: pointer !important;
+    user-select: none !important;
+    display: block !important;
 }
 
 .main_menu summary::-webkit-details-marker {
@@ -43,6 +63,57 @@
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
     text-decoration: none !important;
 }
+
+/* =========================================================
+   EXPANDED 28% RIGHT-HAND DROPDOWN TOGGLE ZONE
+   Summary elements with sub-items get a dedicated 28% right click zone.
+   ========================================================= */
+.main_menu summary > a {
+    padding-right: 3.8rem !important; /* Leave room for right 28% dropdown zone */
+}
+
+/* Right 28% Dropdown Toggle Button Zone */
+.main_menu summary::after {
+    content: "▾ OPEN" !important;
+    position: absolute !important;
+    right: 0.6rem !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    width: 28% !important; /* Expands dropdown click zone to right ~28% of button width */
+    height: 72% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: rgba(245, 158, 11, 0.25) !important; /* Distinct Amber Zone */
+    border: 1.5px solid #f59e0b !important; /* Glaring Gold Border */
+    border-radius: 6px !important;
+    font-size: 0.7rem !important;
+    font-weight: 800 !important;
+    color: #fbbf24 !important;
+    pointer-events: none !important; /* Clicks pass directly to <summary> to toggle <details> */
+    transition: all 0.2s ease !important;
+    letter-spacing: 0.05em !important;
+}
+
+.main_menu summary:hover::after {
+    background: rgba(245, 158, 11, 0.45) !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 8px rgba(245, 158, 11, 0.6) !important;
+}
+
+.main_menu details[open] > summary::after {
+    content: "▴ CLOSE" !important;
+    background: rgba(56, 189, 248, 0.25) !important; /* Sky Blue when open */
+    border-color: #38bdf8 !important;
+    color: #38bdf8 !important;
+}
+
+.main_menu details[open] > summary:hover::after {
+    background: rgba(56, 189, 248, 0.45) !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 8px rgba(56, 189, 248, 0.6) !important;
+}
+
 
 /* =========================================================
    LEVEL 1: Top-Level Menu Buttons (Projects, Upload, etc.)
@@ -152,20 +223,6 @@
     font-size: 0.9rem;
     opacity: 0.9;
     color: #e0f2fe !important;
-}
-
-/* Dropdown disclosure indicator arrows */
-.main_menu summary a::after {
-    content: "▸";
-    margin-left: auto;
-    font-size: 0.8rem;
-    transition: transform 0.2s ease;
-    opacity: 0.85;
-    color: #ffffff;
-}
-
-.main_menu details[open] > summary > a::after {
-    transform: rotate(90deg);
 }
 
 /* Separator styling */
