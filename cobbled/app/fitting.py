@@ -303,8 +303,8 @@ def get_fit_results(source, force_run=False, p_guess=None, k_guess=None, v0_gues
 
 def run_fine_grid_scan(source, p_min, p_max, num_samples=250000, user=None):
     """
-    Executes a high-density fine grid rejection sampling over a custom period range [p_min, p_max] (days).
-    Returns fine-grid scan dictionary containing periods, ln_likes, delta_chi2, and best-fit parameters.
+    Executes a high-density fine grid evaluation over a custom period range [p_min, p_max] (days).
+    Evaluates marginal log-likelihood for all prior samples and computes a smooth 300-step binned periodogram profile.
     """
     try:
         df = load_rv_data(source, user=user)
@@ -321,8 +321,9 @@ def run_fine_grid_scan(source, p_min, p_max, num_samples=250000, user=None):
 
     p_min_val = max(0.1, float(p_min))
     p_max_val = max(p_min_val + 0.05, float(p_max))
+    num_s = int(num_samples)
 
-    # Construct fine-grid prior over narrow period window
+    # 1. Build fine prior over period window
     prior = JokerPrior.default(
         P_min=p_min_val * u.day,
         P_max=p_max_val * u.day,
@@ -331,46 +332,54 @@ def run_fine_grid_scan(source, p_min, p_max, num_samples=250000, user=None):
     )
 
     joker = TheJoker(prior)
-    prior_samples = prior.sample(size=int(num_samples))
-    samples = joker.rejection_sample(data, prior_samples=prior_samples)
+    prior_samples = prior.sample(size=num_s)
 
-    if len(samples) == 0:
-        return {
-            "p_min": p_min_val,
-            "p_max": p_max_val,
-            "accepted": 0,
-            "periods": [],
-            "ln_likes": [],
-            "delta_chi2": [],
-            "best_period": None,
-            "best_k": None,
-            "best_e": None,
-            "min_chi2": None,
-        }
+    # 2. Evaluate marginal log likelihood for ALL prior samples
+    try:
+        ll = joker.marginal_ln_likelihood(data, prior_samples)
+    except Exception:
+        # Fallback to rejection sample if marginal_ln_likelihood is unavailable
+        samples = joker.rejection_sample(data, prior_samples=prior_samples)
+        if len(samples) == 0:
+            return None
+        ll = samples.ln_unmarginalized_likelihood(data)
+        p_samples = [float(v.value) if hasattr(v, "value") else float(v) for v in samples["P"]]
 
-    ln_likes = samples.ln_unmarginalized_likelihood(data)
-    best_idx = np.argmax(ln_likes)
-    max_ll = float(ln_likes[best_idx])
-    delta_chi2 = -2.0 * (ln_likes - max_ll)
+    p_samples = prior_samples["P"].to(u.day).value
 
-    sort_idx = np.argsort(samples["P"])
-    sorted_periods = [float(val.value) if hasattr(val, "value") else float(val) for val in samples["P"][sort_idx]]
-    sorted_ln_likes = [float(ll) for ll in ln_likes[sort_idx]]
-    sorted_delta_chi2 = [float(dc) for dc in delta_chi2[sort_idx]]
+    # 3. Bin into 300 fine period steps
+    n_bins = 300
+    bins = np.linspace(p_min_val, p_max_val, n_bins)
+    bin_centers = 0.5 * (bins[:-1] + bins[1:])
 
-    best_period = float(samples["P"][best_idx].value) if hasattr(samples["P"][best_idx], "value") else float(samples["P"][best_idx])
-    best_k = float(samples["K"][best_idx].value) if hasattr(samples["K"][best_idx], "value") else float(samples["K"][best_idx])
-    best_e = float(samples["e"][best_idx].value) if hasattr(samples["e"][best_idx], "value") else float(samples["e"][best_idx])
+    binned_max_ll = []
+    for i in range(len(bins) - 1):
+        mask = (p_samples >= bins[i]) & (p_samples < bins[i + 1])
+        if np.any(mask):
+            binned_max_ll.append(float(np.max(ll[mask])))
+        else:
+            binned_max_ll.append(np.nan)
+
+    binned_max_ll = np.array(binned_max_ll)
+    valid = ~np.isnan(binned_max_ll)
+    if np.any(valid):
+        binned_max_ll = np.interp(bin_centers, bin_centers[valid], binned_max_ll[valid])
+    else:
+        return None
+
+    max_ll_global = float(np.max(binned_max_ll))
+    delta_chi2 = -2.0 * (binned_max_ll - max_ll_global)
+    best_idx = np.argmin(delta_chi2)
 
     return {
         "p_min": p_min_val,
         "p_max": p_max_val,
-        "accepted": len(samples),
-        "periods": sorted_periods,
-        "ln_likes": sorted_ln_likes,
-        "delta_chi2": sorted_delta_chi2,
-        "best_period": best_period,
-        "best_k": best_k,
-        "best_e": best_e,
+        "accepted": num_s,
+        "periods": [float(p) for p in bin_centers],
+        "ln_likes": [float(l) for l in binned_max_ll],
+        "delta_chi2": [float(d) for d in delta_chi2],
+        "best_period": float(bin_centers[best_idx]),
+        "best_k": None,
+        "best_e": None,
         "min_chi2": 0.0,
     }

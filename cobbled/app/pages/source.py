@@ -455,10 +455,8 @@ def render_fit_results_html(source, fit_run=False, p_guess=None, k_guess=None, v
                     <div class="alert alert-success d-flex align-items-center justify-content-between my-3 py-2 px-3">
                         <div>
                             <i class="fa-solid fa-chart-line me-2 fs-5"></i>
-                            <strong>Fine Grid Peak:</strong> Best Period $P_{{best}} = <strong>{scan_res['best_period']:.4f} days</strong>$,
-                            $K = <strong>{scan_res['best_k']:.2f} km/s</strong>$,
-                            $e = <strong>{scan_res['best_e']:.3f}</strong>$
-                            ({scan_res['accepted']} accepted orbits sampled out of {num_s:,} grid points).
+                            <strong>Fine Grid Periodogram Scan:</strong> Best Period $P_{{best}} = <strong>{scan_res['best_period']:.4f} days</strong>$
+                            (evaluated across {scan_res['accepted']:,} prior grid samples binned into {len(scan_res['periods'])} fine period steps).
                         </div>
                         <span class="badge bg-dark">Δχ²_min = 0.0</span>
                     </div>
