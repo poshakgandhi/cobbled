@@ -634,15 +634,15 @@ class SourceViewPage(Page):
                 v0_guess = request.GET.get("v0_guess")
                 e_guess = request.GET.get("e_guess")
 
-                s_guess = request.GET.get("s_guess")
+                s_guess_param = request.GET.get("s_guess")
 
                 p_guess = float(p_guess) if p_guess else None
                 k_guess = float(k_guess) if k_guess else None
                 v0_guess = float(v0_guess) if v0_guess else None
                 e_guess = float(e_guess) if e_guess else None
-                s_guess = float(s_guess) if s_guess else 0.5
+                s_guess = float(s_guess_param) if s_guess_param else 0.5
 
-                fit_run = (request and request.GET.get("fit") == "true") or any(v is not None for v in [p_guess, k_guess, v0_guess, e_guess])
+                fit_run = (request and request.GET.get("fit") == "true") or any(v is not None for v in [p_guess, k_guess, v0_guess, e_guess, s_guess_param])
 
                 from app.models.keplerian_fit import KeplerianFit
                 from app.fitting import get_rv_data_hash, load_rv_data
@@ -695,15 +695,15 @@ class SourceViewPage(Page):
             k_guess = request.GET.get("k_guess")
             v0_guess = request.GET.get("v0_guess")
             e_guess = request.GET.get("e_guess")
-            s_guess = request.GET.get("s_guess")
+            s_guess_param = request.GET.get("s_guess")
 
             p_guess = float(p_guess) if p_guess else None
             k_guess = float(k_guess) if k_guess else None
             v0_guess = float(v0_guess) if v0_guess else None
             e_guess = float(e_guess) if e_guess else None
-            s_guess = float(s_guess) if s_guess else 0.5
+            s_guess = float(s_guess_param) if s_guess_param else 0.5
 
-            fit_run = (request and request.GET.get("fit") == "true") or any(v is not None for v in [p_guess, k_guess, v0_guess, e_guess])
+            fit_run = (request and request.GET.get("fit") == "true") or any(v is not None for v in [p_guess, k_guess, v0_guess, e_guess, s_guess_param])
             return render_fit_results_html(
                 source,
                 fit_run=fit_run,

@@ -4,8 +4,8 @@ Submenu for items relating to projects.
 
 from collections import defaultdict
 from django.db.models import Q
-from iommi import LAST, M
-from iommi.main_menu import EXTERNAL
+from iommi import LAST
+from iommi.main_menu import EXTERNAL, M
 
 from app.forms.project import ProjectForm
 from app.forms.proposal import ProposalForm
