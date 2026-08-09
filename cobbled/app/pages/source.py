@@ -421,109 +421,26 @@ def render_fit_results_html(source, fit_run=False, p_guess=None, k_guess=None, v
         except Exception as e:
             planning_html = f"<div class='alert alert-danger'>Error generating planning dates: {str(e)}</div>"
 
-    # Fine Grid Scan Section
-    fine_grid_html = ""
-    if display_parameters:
-        # Get MAP period estimate
-        map_period = 10.0
-        for row in display_parameters:
-            if row.get("name") in ["MAP Period (P)", "Period (P)", "Period"]:
-                try:
-                    map_period = float(row.get("val"))
-                except (ValueError, TypeError):
-                    pass
-
-        p_min_default = f"{max(0.1, map_period * 0.7):.2f}"
-        p_max_default = f"{map_period * 1.3:.2f}"
-
-        fine_scan_plot_html = ""
-        fine_scan_summary = ""
-
-        # Check if fine grid scan was requested via GET params
-        p_min_param = request.GET.get("fine_p_min") if request else None
-        p_max_param = request.GET.get("fine_p_max") if request else None
-        samples_param = request.GET.get("fine_samples", "250000") if request else "250000"
-
-        if p_min_param and p_max_param:
-            try:
-                p_min_val = float(p_min_param)
-                p_max_val = float(p_max_param)
-                num_s = int(samples_param)
-
-                # Strict Straddling Validation Rule: P_min < map_period < P_max
-                if not (p_min_val < map_period < p_max_val):
-                    fine_scan_plot_html = f"""
-                    <div class="alert alert-danger my-3 p-3 shadow-sm border-danger">
-                        <h6 class="fw-bold mb-1"><i class="fa-solid fa-ban me-2"></i>Invalid Period Window (Strict Straddling Enforced)</h6>
-                        The requested fine grid range [<strong>{p_min_val:.2f}</strong>, <strong>{p_max_val:.2f}</strong>] days does not straddle the current fitted period <strong>P<sub>best</sub> = {map_period:.4f} days</strong>.
-                        <br><small class="text-muted">The fine grid scan range must strictly satisfy P<sub>min</sub> &lt; P<sub>best</sub> &lt; P<sub>max</sub> to be evaluated.</small>
+    # Period vs Delta Chi2 Profile for accepted samples (up to 50 max)
+    period_deltachi2_html = ""
+    if display_samples:
+        try:
+            from app.plots.period_vs_deltachi2 import get_period_vs_deltachi2_plot
+            deltachi2_plot_code = get_period_vs_deltachi2_plot(source, fit_samples=display_samples, user=request.user if request else None)
+            if deltachi2_plot_code:
+                period_deltachi2_html = f"""
+                <div class="card mt-4 border border-secondary-subtle shadow-sm rounded-3">
+                    <div class="card-header bg-dark text-white p-3 d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0 fw-bold"><i class="fa-solid fa-chart-scatter me-2 text-info"></i>Posterior Period vs. Δχ² Profile</h5>
+                        <span class="badge bg-info text-dark">Accepted Orbits (Up to 50 Max)</span>
                     </div>
-                    """
-                else:
-                    from app.fitting import run_fine_grid_scan
-                    from app.plots.rv_curve import get_fine_grid_plot
-
-                    user_obj = request.user if request else None
-                    scan_res = run_fine_grid_scan(source, p_min_val, p_max_val, num_samples=num_s, user=user_obj)
-
-                    if scan_res and scan_res.get("accepted", 0) > 0:
-                        fine_scan_plot_html = get_fine_grid_plot(scan_res)
-                        fine_scan_summary = f"""
-                        <div class="alert alert-success d-flex align-items-center justify-content-between my-3 py-2 px-3">
-                            <div>
-                                <i class="fa-solid fa-chart-line me-2 fs-5"></i>
-                                <strong>Fine Grid Periodogram Scan:</strong> Best Period $P_{{best}} = <strong>{scan_res['best_period']:.4f} days</strong>$
-                                (evaluated across {scan_res['accepted']:,} prior grid samples binned into {len(scan_res['periods'])} fine period steps).
-                            </div>
-                            <span class="badge bg-dark">Δχ²_min = 0.0</span>
-                        </div>
-                        """
-                    else:
-                        fine_scan_plot_html = "<div class='alert alert-warning my-3'><i class='fa-solid fa-triangle-exclamation me-2'></i>No accepted orbits found in the specified period range. Try expanding the min/max period window.</div>"
-            except Exception as ex:
-                fine_scan_plot_html = f"<div class='alert alert-danger my-3'>Fine Grid Scan Error: {str(ex)}</div>"
-
-        fine_grid_html = f"""
-        <div class="card mt-4 border border-secondary-subtle shadow-sm rounded-3">
-            <div class="card-header bg-dark text-white p-3 d-flex justify-content-between align-items-center">
-                <h5 class="mb-0 fw-bold"><i class="fa-solid fa-magnifying-glass-chart me-2 text-warning"></i>Finer Grid Simulation & Posterior Likelihood Scan</h5>
-                <span class="badge bg-secondary">On-Demand Fine Period Scan</span>
-            </div>
-            <div class="card-body p-4">
-                <p class="text-muted small mb-3">
-                    <i class="fa-solid fa-info-circle me-1 text-primary"></i>Conduct a high-density sampling grid focused over a narrow period window to evaluate posterior log-likelihood $\ln \mathcal{{L}}$ and $\Delta \chi^2$ profile confidence limits ($1\sigma$ and $3\sigma$).
-                </p>
-
-                <form method="GET" action="" class="row g-3 align-items-end mb-3">
-                    <input type="hidden" name="fit" value="true">
-                    <div class="col-md-3">
-                        <label class="form-label fw-bold small mb-1">Period Min $P_{{min}}$ (days)</label>
-                        <input type="number" step="any" name="fine_p_min" value="{p_min_param or p_min_default}" class="form-control form-control-sm font-monospace" required>
+                    <div class="card-body p-3">
+                        {deltachi2_plot_code}
                     </div>
-                    <div class="col-md-3">
-                        <label class="form-label fw-bold small mb-1">Period Max $P_{{max}}$ (days)</label>
-                        <input type="number" step="any" name="fine_p_max" value="{p_max_param or p_max_default}" class="form-control form-control-sm font-monospace" required>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label fw-bold small mb-1">Grid Prior Density</label>
-                        <select name="fine_samples" class="form-select form-select-sm">
-                            <option value="100000" {"selected" if samples_param == "100000" else ""}>100,000 Samples (Fast)</option>
-                            <option value="250000" {"selected" if samples_param == "250000" else ""}>250,000 Samples (Standard)</option>
-                            <option value="500000" {"selected" if samples_param == "500000" else ""}>500,000 Samples (Ultra Fine)</option>
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <button type="submit" class="btn btn-warning btn-sm w-100 fw-bold shadow-sm">
-                            <i class="fa-solid fa-bolt me-1"></i>Run Fine Grid Scan
-                        </button>
-                    </div>
-                </form>
-
-                {fine_scan_summary}
-                {fine_scan_plot_html}
-            </div>
-        </div>
-        """
+                </div>
+                """
+        except Exception as e:
+            period_deltachi2_html = f"<div class='alert alert-warning mt-3'>Could not render Period vs Δχ² plot: {str(e)}</div>"
 
     return f"""
     {form_html}
@@ -531,7 +448,7 @@ def render_fit_results_html(source, fit_run=False, p_guess=None, k_guess=None, v
     <h5 class="fw-bold mb-3"><i class="fa-solid fa-list-check me-2"></i>Fitted Orbital Parameters</h5>
     {table_html}
     {planning_html}
-    {fine_grid_html}
+    {period_deltachi2_html}
     """
 
 

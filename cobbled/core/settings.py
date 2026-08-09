@@ -97,9 +97,16 @@ if DEBUG:
 
 MIDDLEWARE: list[str] = [
     "corsheaders.middleware.CorsMiddleware",
-    "iommi.live_edit.Middleware",
-    "iommi.sql_trace.Middleware",
-    "iommi.profiling.Middleware",
+]
+
+if DEBUG:
+    MIDDLEWARE += [
+        "iommi.live_edit.Middleware",
+        "iommi.sql_trace.Middleware",
+        "iommi.profiling.Middleware",
+    ]
+
+MIDDLEWARE += [
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
