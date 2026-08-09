@@ -206,13 +206,18 @@ LOGGING: dict[str, Any] = {
     },
     "loggers": {
         "": {
-            "level": "DEBUG",
-            "handlers": ["file_django"],
+            "level": "INFO",
+            "handlers": ["console", "file_django"],
+            "propagate": False,
+        },
+        "django.request": {
+            "level": "ERROR",
+            "handlers": ["console"],
             "propagate": False,
         },
         "app": {
             "level": "DEBUG",
-            "handlers": ["file_app"],
+            "handlers": ["console", "file_app"],
             "propagate": False,
         },
     },
