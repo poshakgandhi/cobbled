@@ -8,6 +8,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/1.7/ref/settings/
 """
 
+import os
 import random
 import string
 from pathlib import Path
@@ -32,7 +33,9 @@ if not SECRET_KEY:
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG: bool = config("DEBUG", default=False, cast=bool)
-TEMPLATE_DEBUG = config("DEBUG", default=False, cast=bool)
+if os.environ.get("SPACE_ID"):
+    DEBUG = False
+TEMPLATE_DEBUG = DEBUG
 
 
 TEMPLATES: list[dict[str, Any]] = [

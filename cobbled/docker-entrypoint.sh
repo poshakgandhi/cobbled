@@ -1,5 +1,6 @@
 if [ -n "$SPACE_ID" ]; then
     PORT=${PORT:-7860}
+    export DEBUG=False
 else
     PORT=${PORT:-8000}
 fi
