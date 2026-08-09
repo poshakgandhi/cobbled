@@ -13,15 +13,35 @@ import os
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.settings')
 import django
 django.setup()
+from django.apps import apps
 from django.db import connection
 try:
+    app_config = apps.get_app_config('app')
     with connection.cursor() as cursor:
-        table_names = connection.introspection.table_names(cursor)
-        if 'app_project' in table_names:
-            columns = [col.name for col in connection.introspection.get_table_description(cursor, 'app_project')]
-            if 'is_community' not in columns:
-                cursor.execute('ALTER TABLE app_project ADD COLUMN is_community bool NOT NULL DEFAULT 0;')
-                print('Auto-migrated app_project table: added is_community column.')
+        existing_tables = connection.introspection.table_names(cursor)
+        for model in app_config.get_models():
+            db_table = model._meta.db_table
+            if db_table not in existing_tables:
+                continue
+            existing_cols = [col.name for col in connection.introspection.get_table_description(cursor, db_table)]
+            for field in model._meta.concrete_fields:
+                col_name = field.column
+                if col_name not in existing_cols:
+                    internal_type = field.get_internal_type()
+                    if internal_type in ['BooleanField', 'NullBooleanField']:
+                        sql_type = 'bool NOT NULL DEFAULT 0'
+                    elif internal_type in ['IntegerField', 'BigIntegerField', 'SmallIntegerField', 'PositiveIntegerField', 'ForeignKey', 'OneToOneField']:
+                        sql_type = 'integer'
+                    elif internal_type in ['FloatField', 'DecimalField']:
+                        sql_type = 'real'
+                    else:
+                        sql_type = 'text'
+                    alter_sql = f'ALTER TABLE \"{db_table}\" ADD COLUMN \"{col_name}\" {sql_type};'
+                    try:
+                        cursor.execute(alter_sql)
+                        print(f'Auto-migrated {db_table}: added column {col_name}')
+                    except Exception as err:
+                        print(f'Warning migrating {db_table}.{col_name}: {err}')
 except Exception as e:
     print('Schema check warning:', e)
 "
