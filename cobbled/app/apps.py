@@ -27,11 +27,25 @@ class MainAppConfig(AppConfig):
             WavelengthUnit,
         )
 
-        # Ensure all existing users have Researcher profiles on first request
+        # Ensure all existing users have Researcher profiles and database schema is updated on first request
         from django.core.signals import request_started
         
         def on_request_started(sender, **kwargs):
             request_started.disconnect(on_request_started)
+
+            # Ensure database schema is up to date on legacy SQLite databases (e.g., is_community column on app_project)
+            from django.db import connection
+            try:
+                with connection.cursor() as cursor:
+                    table_names = connection.introspection.table_names(cursor)
+                    if "app_project" in table_names:
+                        columns = [col.name for col in connection.introspection.get_table_description(cursor, "app_project")]
+                        if "is_community" not in columns:
+                            cursor.execute("ALTER TABLE app_project ADD COLUMN is_community bool NOT NULL DEFAULT 0;")
+                            logger.info("Auto-migrated app_project table to add missing is_community column.")
+            except Exception as e:
+                logger.warning(f"Auto-migration check failed: {e}")
+
             from django.contrib.auth import get_user_model
             User = get_user_model()
             try:
