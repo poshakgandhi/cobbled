@@ -104,6 +104,7 @@ if DEBUG:
     ]
 
 MIDDLEWARE: list[str] = [
+    "app.middleware.HeadToGetMiddleware",
     "corsheaders.middleware.CorsMiddleware",
 ]
 

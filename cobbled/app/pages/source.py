@@ -442,6 +442,27 @@ def render_fit_results_html(source, fit_run=False, p_guess=None, k_guess=None, v
         except Exception as e:
             period_deltachi2_html = f"<div class='alert alert-warning mt-3'>Could not render Period vs Δχ² plot: {str(e)}</div>"
 
+    # Binary Mass Function f(m) Distribution Plot for accepted samples (up to 50 max)
+    mass_function_html = ""
+    if display_samples:
+        try:
+            from app.plots.mass_function_dist import get_mass_function_dist_plot
+            fm_plot_code = get_mass_function_dist_plot(source, fit_samples=display_samples, user=request.user if request else None)
+            if fm_plot_code:
+                mass_function_html = f"""
+                <div class="card mt-4 border border-secondary-subtle shadow-sm rounded-3">
+                    <div class="card-header bg-dark text-white p-3 d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0 fw-bold"><i class="fa-solid fa-weight-hanging me-2 text-warning"></i>Binary Mass Function f(m) Distribution</h5>
+                        <span class="badge bg-warning text-dark">Accepted Orbits (Up to 50 Max)</span>
+                    </div>
+                    <div class="card-body p-3">
+                        {fm_plot_code}
+                    </div>
+                </div>
+                """
+        except Exception as e:
+            mass_function_html = f"<div class='alert alert-warning mt-3'>Could not render Mass Function plot: {str(e)}</div>"
+
     return f"""
     {form_html}
     {status_alert}
@@ -449,6 +470,7 @@ def render_fit_results_html(source, fit_run=False, p_guess=None, k_guess=None, v
     {table_html}
     {planning_html}
     {period_deltachi2_html}
+    {mass_function_html}
     """
 
 
