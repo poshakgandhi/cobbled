@@ -17,7 +17,7 @@ def source_has_rv_data(source, user=None) -> bool:
         return False
 
 
-def get_request_cached_fit(source, request, fit_run, p_guess, k_guess, v0_guess, e_guess):
+def get_request_cached_fit(source, request, fit_run, p_guess, k_guess, v0_guess, e_guess, s_guess=0.5):
     if not request:
         from app.fitting import get_fit_results
         return get_fit_results(
@@ -27,6 +27,7 @@ def get_request_cached_fit(source, request, fit_run, p_guess, k_guess, v0_guess,
             k_guess=k_guess,
             v0_guess=v0_guess,
             e_guess=e_guess,
+            s_guess=s_guess,
             user=None
         )
 
@@ -40,6 +41,7 @@ def get_request_cached_fit(source, request, fit_run, p_guess, k_guess, v0_guess,
             k_guess=k_guess,
             v0_guess=v0_guess,
             e_guess=e_guess,
+            s_guess=s_guess,
             user=request.user
         )
         setattr(request, cache_key, (fit_samples, fit_parameters))
