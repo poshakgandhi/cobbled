@@ -8,119 +8,72 @@ app_port: 7860
 pinned: false
 ---
 
-# Compact Object BBinary Live Experiments Database
+# COBBLED 2.0 - Compact Object Binary Live Experiments Database
 
+**COBBLED 2.0** is an advanced astrophysical data platform designed for managing, analyzing, and modeling spectroscopic radial velocity (RV) observations for compact binary systems and stellar-mass black hole candidates (e.g., Gaia-BH1, Gaia-BH3).
 
-## Prerequisites
+---
 
-You need [uv](https://docs.astral.sh/uv/getting-started/installation/),
-the Python package/version/virtual environment manager.
-If you don't already have it, recommend installing it using `pipx`:
+## 🌟 Key Features in COBBLED 2.0
 
+1. **TheJoker Keplerian Fitting Engine with Intrinsic Scatter ($s$)**:
+   - Integrated **TheJoker** Monte Carlo rejection sampler with customizable prior initial guesses ($P, K, v_0, e$).
+   - Full support for **Intrinsic Scatter / Stellar Jitter ($s$)** added in quadrature to observational errors ($\sigma_{\text{eff}} = \sqrt{\sigma_{\text{obs}}^2 + s^2}$).
+   - Deterministic, 100% reproducible sampling using fixed-seed random number generation.
+
+2. **On-Demand Fine Grid Periodogram & $\Delta \chi^2$ Scan**:
+   - Evaluates marginal log-likelihoods ($\ln \mathcal{L}$) across prior grid samples binned into 300 fine period steps.
+   - Computes continuous $\Delta \chi^2(P)$ likelihood profiles with $1\sigma$ ($\Delta\chi^2=1.0$) and $3\sigma$ ($\Delta\chi^2=9.0$) confidence limits.
+   - Enforces strict period straddling validation ($P_{\min} < P_{\text{best}} < P_{\max}$).
+
+3. **Two-Tier Privacy & Data Provenance Model**:
+   - Strict separation between private user drafts (`is_community=False`) and published community data (`is_community=True`).
+   - One-click **`[ 🌐 Transfer ]`** action to publish private observations to the public tier while retaining uploader credit.
+
+4. **Persistent Volume Storage**:
+   - Hugging Face Spaces & Docker persistent volume mounting at `/data/db.sqlite3` and `/data/media/`.
+
+5. **Enhanced UI Layout**:
+   - Top-aligned left sidebar navigation menu with responsive dropdown hierarchy.
+
+---
+
+## 🚀 Quick Start (Local Setup)
+
+### Prerequisites
+Install [uv](https://docs.astral.sh/uv/getting-started/installation/):
 ```bash
 pipx install uv
 ```
 
-(`pipx` installs packages as tools in their own virtual environment, [link if you don't already have it.](https://pipx.pypa.io/latest/installation/))
-
-## Installation
-
-Clone the repo to your computer:
-
+### Installation
 ```bash
-git clone git@github.com:yourusername/cobbled
-```
-
-Then enter the directory, and copy the default environment file `.env.default`:
-
-```bash
+git clone https://github.com/poshakgandhi/cobbled.git
 cd cobbled
+git checkout cobbled-2.0
 cp .env.default .env
-```
 
-Initialise the virtual environment and install the development prerequisites into it.
-Then set up the database and load the demo data:
-
-```bash
 uv venv
 source .venv/bin/activate
 make develop
 make setup
 ```
 
-You can now run the server with:
-
+Run dev server:
 ```bash
-make server
+PYTHONPATH=cobbled python cobbled/manage.py runserver 0.0.0.0:8000
 ```
+Open `http://localhost:8000` in your browser.
 
-Go to `http://localhost:8000`, and look around.
+---
 
-In order to sign in, you'll need to register the app with Google's OAuth. Follow the process in the [AllAuth docs](https://docs.allauth.org/en/latest/socialaccount/providers/google.html):
-
-1. Create a new Google OAuth client.
-2. Add the **client ID** and **secret** to your `.env` file.
-3. Add `http://localhost` and `http://localhost:8000` to the OAuth client as authorised JavaScript origins and redirect URIs.
-4. Restart the server.
-
-Once you've signed in, you can register your account as a superuser:
-
+## 📁 Standalone Gaia-BH1 Fitting Script
+A standalone, zero-framework Python script is included at [`cobbled/fit_gaia_bh1_simple.py`](file:///soft/cobbled/cobbled/fit_gaia_bh1_simple.py) for testing directly in VSCode or Spyder:
 ```bash
-djmanage makestaff your_email@gmail.com --superuser
+python cobbled/fit_gaia_bh1_simple.py
 ```
 
-(This is just a shortcut to `python manage.py` from the correct directory)
+---
 
-Now you have access to the admin interface, and can manually view and edit things.
-
-## Deployment
-
-Installing the package for deployment is also fairly straightforward, and just requires Docker.
-Clone the code to the server, and copy the environment file.
-
-```shell
-cd /var/www/
-git clone https://github.com/yourusername/cobbled
-cd cobbled
-cp .env.default .env
-```
-
-Add your OAuth client details to the file, make sure debug mode is off, and then build and launch the server.  
-
-```shell
-screen
-sudo docker compose up
-[ctrl-a, ctrl-d]
-```
-
-You can't run a deployment in debug mode! It will fail (if you *want* to, you can change the Dockerfile to allow it).
-View the logs for a running deployment with `docker compose logs web` or `nginx` as appropriate.
-
-Finally, install the fixtures as a one-off command: 
-
-```
-sudo docker exec -it cobbled-web /bin/bash
-uv run manage.py loaddata app/fixtures/*.json*
-exit
-```
-
-### Updates
-
-To update the site once deployed, update the repository, then re-enter the screen, take the containers down, and re-build them.
-
-```shell
-screen -r
-git pull
-sudo docker compose down  
-sudo docker compose build --no-cache
-sudo docker compose up
-```
-
-## Documentation
-
-Developer documentation for the site [can be found here](docs/src/index.md).
-
-## Overview
-
-> [!NOTE]
-> This library was generated using [copier](https://copier.readthedocs.io/en/stable/) from the [Base Python Project Template repository](https://github.com/python-project-templates/base).
+## 📜 License
+Apache-2.0 License.

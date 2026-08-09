@@ -20,7 +20,7 @@ class FittingTestCase(TestCase):
         samples, parameters = run_joker_fit(self.source, prior_samples=20000)
         if samples is not None:
             self.assertTrue(len(samples) >= 0)
-            self.assertEqual(len(parameters), 10)
+            self.assertEqual(len(parameters), 11)
             for p in parameters:
                 self.assertIn("name", p)
                 self.assertIn("val", p)
@@ -54,7 +54,7 @@ class FittingTestCase(TestCase):
         )
         if samples is not None:
             self.assertTrue(len(samples) >= 0)
-            self.assertEqual(len(parameters), 10)
+            self.assertEqual(len(parameters), 11)
 
 
     def test_get_rv_plot_with_fit(self):

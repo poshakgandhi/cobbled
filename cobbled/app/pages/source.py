@@ -199,7 +199,7 @@ def get_planning_dates(fit_samples, t_last, jd_min):
     return results
 
 
-def render_fit_results_html(source, fit_run=False, p_guess=None, k_guess=None, v0_guess=None, e_guess=None, request=None) -> str:
+def render_fit_results_html(source, fit_run=False, p_guess=None, k_guess=None, v0_guess=None, e_guess=None, s_guess=0.5, request=None) -> str:
     from app.models.keplerian_fit import KeplerianFit
     from app.fitting import get_rv_data_hash, load_rv_data
 
@@ -227,7 +227,7 @@ def render_fit_results_html(source, fit_run=False, p_guess=None, k_guess=None, v
 
     # Retrieve or run the fit (cached on request to avoid double runs)
     display_samples, display_parameters = get_request_cached_fit(
-        source, request, fit_run, p_guess, k_guess, v0_guess, e_guess
+        source, request, fit_run, p_guess, k_guess, v0_guess, e_guess, s_guess
     )
 
     status_alert = ""
@@ -288,6 +288,7 @@ def render_fit_results_html(source, fit_run=False, p_guess=None, k_guess=None, v
     k_val = f'value="{k_guess}"' if k_guess is not None else ''
     v0_val = f'value="{v0_guess}"' if v0_guess is not None else ''
     e_val = f'value="{e_guess}"' if e_guess is not None else ''
+    s_val = f'value="{s_guess}"' if s_guess is not None else 'value="0.5"'
 
     form_html = f"""
     <div class="bg-light p-3 rounded mb-4 border">
@@ -295,21 +296,25 @@ def render_fit_results_html(source, fit_run=False, p_guess=None, k_guess=None, v
         <form method="get">
             <input type="hidden" name="fit" value="true">
             <div class="row g-3 mb-3">
-                <div class="col-md-3">
-                    <label class="form-label fw-bold small text-muted mb-1">Period Guess (days)</label>
+                <div class="col-md-2">
+                    <label class="form-label fw-bold small text-muted mb-1">Period Guess (d)</label>
                     <input type="number" step="any" min="0.1" name="p_guess" class="form-control form-control-sm" placeholder="e.g. 10.5" {p_val}>
                 </div>
-                <div class="col-md-3">
-                    <label class="form-label fw-bold small text-muted mb-1">Amplitude K Guess (km/s)</label>
+                <div class="col-md-2">
+                    <label class="form-label fw-bold small text-muted mb-1">Amplitude K (km/s)</label>
                     <input type="number" step="any" min="0.1" name="k_guess" class="form-control form-control-sm" placeholder="e.g. 20.0" {k_val}>
                 </div>
-                <div class="col-md-3">
-                    <label class="form-label fw-bold small text-muted mb-1">Systemic Velocity v0 (km/s)</label>
+                <div class="col-md-2">
+                    <label class="form-label fw-bold small text-muted mb-1">Velocity v0 (km/s)</label>
                     <input type="number" step="any" name="v0_guess" class="form-control form-control-sm" placeholder="e.g. 5.0" {v0_val}>
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label fw-bold small text-muted mb-1">Eccentricity Guess e</label>
+                    <label class="form-label fw-bold small text-muted mb-1">Eccentricity e</label>
                     <input type="number" step="any" min="0" max="0.99" name="e_guess" class="form-control form-control-sm" placeholder="e.g. 0.20" {e_val}>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-bold small text-muted mb-1">Intrinsic Scatter s (km/s)</label>
+                    <input type="number" step="any" min="0" name="s_guess" class="form-control form-control-sm" placeholder="e.g. 0.50" {s_val}>
                 </div>
             </div>
             <div class="d-flex justify-content-between align-items-center">
@@ -627,10 +632,13 @@ class SourceViewPage(Page):
                 v0_guess = request.GET.get("v0_guess")
                 e_guess = request.GET.get("e_guess")
 
+                s_guess = request.GET.get("s_guess")
+
                 p_guess = float(p_guess) if p_guess else None
                 k_guess = float(k_guess) if k_guess else None
                 v0_guess = float(v0_guess) if v0_guess else None
                 e_guess = float(e_guess) if e_guess else None
+                s_guess = float(s_guess) if s_guess else 0.5
 
                 fit_run = (request and request.GET.get("fit") == "true") or any(v is not None for v in [p_guess, k_guess, v0_guess, e_guess])
 
@@ -659,7 +667,8 @@ class SourceViewPage(Page):
                     p_guess,
                     k_guess,
                     v0_guess,
-                    e_guess
+                    e_guess,
+                    s_guess
                 )
                 figure = get_rv_plot(source, fit_samples=fit_samples, user=request.user)
 
@@ -684,11 +693,13 @@ class SourceViewPage(Page):
             k_guess = request.GET.get("k_guess")
             v0_guess = request.GET.get("v0_guess")
             e_guess = request.GET.get("e_guess")
+            s_guess = request.GET.get("s_guess")
 
             p_guess = float(p_guess) if p_guess else None
             k_guess = float(k_guess) if k_guess else None
             v0_guess = float(v0_guess) if v0_guess else None
             e_guess = float(e_guess) if e_guess else None
+            s_guess = float(s_guess) if s_guess else 0.5
 
             fit_run = (request and request.GET.get("fit") == "true") or any(v is not None for v in [p_guess, k_guess, v0_guess, e_guess])
             return render_fit_results_html(
@@ -698,6 +709,7 @@ class SourceViewPage(Page):
                 k_guess=k_guess,
                 v0_guess=v0_guess,
                 e_guess=e_guess,
+                s_guess=s_guess,
                 request=request
             )
 

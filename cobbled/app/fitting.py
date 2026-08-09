@@ -79,10 +79,10 @@ def deserialize_samples(serialized) -> TheJoker | None:
     return samples
 
 
-def run_joker_fit(source, prior_samples=100000, p_guess=None, k_guess=None, v0_guess=None, e_guess=None, user=None):
+def run_joker_fit(source, prior_samples=100000, p_guess=None, k_guess=None, v0_guess=None, e_guess=None, s_guess=0.5, user=None):
     """
     Runs The Joker rejection sampler, dynamically tuning priors based on guesses,
-    and saves the fit to the database.
+    including intrinsic scatter s (stellar jitter), and saves the fit to the database.
     """
     try:
         df = load_rv_data(source, user=user)
@@ -114,16 +114,19 @@ def run_joker_fit(source, prior_samples=100000, p_guess=None, k_guess=None, v0_g
     else:
         sigma_K0 = 30.0 * u.km / u.s
 
+    # 3. Intrinsic scatter s (stellar jitter)
+    s_val = float(s_guess) if (s_guess is not None and s_guess >= 0) else 0.5
+
     # Define custom model context for custom priors
     with pm.Model() as model:
         pars = {}
 
-        # 3. Custom Systemic Velocity (v0) prior
+        # 4. Custom Systemic Velocity (v0) prior
         if v0_guess is not None:
             v0 = pm.Normal("v0", v0_guess, 15.0)
             pars["v0"] = with_unit(v0, u.km / u.s)
 
-        # 4. Custom Eccentricity (e) prior
+        # 5. Custom Eccentricity (e) prior
         if e_guess is not None and 0.0 <= e_guess <= 0.99:
             e = pm.Uniform("e", max(0.001, e_guess - 0.15), min(0.99, e_guess + 0.15))
             pars["e"] = with_unit(e, u.one)
@@ -133,11 +136,13 @@ def run_joker_fit(source, prior_samples=100000, p_guess=None, k_guess=None, v0_g
             P_max=P_max,
             sigma_K0=sigma_K0,
             sigma_v=100.0 * u.km / u.s,
+            s=s_val * u.km / u.s,
             model=model,
             pars=pars
         )
 
-    joker = TheJoker(prior)
+    rng = np.random.default_rng(42)
+    joker = TheJoker(prior, rng=rng)
     samples = joker.rejection_sample(data, prior_samples=prior_samples)
 
     if len(samples) == 0:
@@ -162,6 +167,7 @@ def run_joker_fit(source, prior_samples=100000, p_guess=None, k_guess=None, v0_g
     # f(m) = 1.03606e-7 * P * |K|^3 * (1 - e^2)^1.5
     f_m_vals = 1.03606e-7 * sample_arrays['P'] * (np.abs(sample_arrays['K']) ** 3) * ((1.0 - sample_arrays['e'] ** 2) ** 1.5)
     sample_arrays['f_m'] = f_m_vals
+    sample_arrays['s'] = np.full_like(sample_arrays['P'], s_val)
 
     parameters = []
     names = {
@@ -170,6 +176,7 @@ def run_joker_fit(source, prior_samples=100000, p_guess=None, k_guess=None, v0_g
         'omega': ('Argument of Periastron (ω)', 'rad'),
         'K': ('Velocity Amplitude (K)', 'km/s'),
         'v0': ('Systemic Velocity (v0)', 'km/s'),
+        's': ('Intrinsic Scatter (s)', 'km/s'),
         'f_m': ('Binary Mass Function f(m)', 'M_☉'),
     }
 
@@ -253,7 +260,7 @@ def run_joker_fit(source, prior_samples=100000, p_guess=None, k_guess=None, v0_g
 
 
 
-def get_fit_results(source, force_run=False, p_guess=None, k_guess=None, v0_guess=None, e_guess=None, user=None):
+def get_fit_results(source, force_run=False, p_guess=None, k_guess=None, v0_guess=None, e_guess=None, s_guess=0.5, user=None):
     """
     Retrieves the fit results. First checks Django database. If force_run is True or
     no saved fit matches the current observation data hash, it executes a new fit.
@@ -292,6 +299,7 @@ def get_fit_results(source, force_run=False, p_guess=None, k_guess=None, v0_gues
         k_guess=k_guess,
         v0_guess=v0_guess,
         e_guess=e_guess,
+        s_guess=s_guess,
         user=user
     )
     
