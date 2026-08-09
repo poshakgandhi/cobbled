@@ -443,26 +443,36 @@ def render_fit_results_html(source, fit_run=False, p_guess=None, k_guess=None, v
                 p_max_val = float(p_max_param)
                 num_s = int(samples_param)
 
-                from app.fitting import run_fine_grid_scan
-                from app.plots.rv_curve import get_fine_grid_plot
-
-                user_obj = request.user if request else None
-                scan_res = run_fine_grid_scan(source, p_min_val, p_max_val, num_samples=num_s, user=user_obj)
-
-                if scan_res and scan_res.get("accepted", 0) > 0:
-                    fine_scan_plot_html = get_fine_grid_plot(scan_res)
-                    fine_scan_summary = f"""
-                    <div class="alert alert-success d-flex align-items-center justify-content-between my-3 py-2 px-3">
-                        <div>
-                            <i class="fa-solid fa-chart-line me-2 fs-5"></i>
-                            <strong>Fine Grid Periodogram Scan:</strong> Best Period $P_{{best}} = <strong>{scan_res['best_period']:.4f} days</strong>$
-                            (evaluated across {scan_res['accepted']:,} prior grid samples binned into {len(scan_res['periods'])} fine period steps).
-                        </div>
-                        <span class="badge bg-dark">Δχ²_min = 0.0</span>
+                # Strict Straddling Validation Rule: P_min < map_period < P_max
+                if not (p_min_val < map_period < p_max_val):
+                    fine_scan_plot_html = f"""
+                    <div class="alert alert-danger my-3 p-3 shadow-sm border-danger">
+                        <h6 class="fw-bold mb-1"><i class="fa-solid fa-ban me-2"></i>Invalid Period Window (Strict Straddling Enforced)</h6>
+                        The requested fine grid range [<strong>{p_min_val:.2f}</strong>, <strong>{p_max_val:.2f}</strong>] days does not straddle the current fitted period <strong>P<sub>best</sub> = {map_period:.4f} days</strong>.
+                        <br><small class="text-muted">The fine grid scan range must strictly satisfy P<sub>min</sub> &lt; P<sub>best</sub> &lt; P<sub>max</sub> to be evaluated.</small>
                     </div>
                     """
                 else:
-                    fine_scan_plot_html = "<div class='alert alert-warning my-3'><i class='fa-solid fa-triangle-exclamation me-2'></i>No accepted orbits found in the specified period range. Try expanding the min/max period window.</div>"
+                    from app.fitting import run_fine_grid_scan
+                    from app.plots.rv_curve import get_fine_grid_plot
+
+                    user_obj = request.user if request else None
+                    scan_res = run_fine_grid_scan(source, p_min_val, p_max_val, num_samples=num_s, user=user_obj)
+
+                    if scan_res and scan_res.get("accepted", 0) > 0:
+                        fine_scan_plot_html = get_fine_grid_plot(scan_res)
+                        fine_scan_summary = f"""
+                        <div class="alert alert-success d-flex align-items-center justify-content-between my-3 py-2 px-3">
+                            <div>
+                                <i class="fa-solid fa-chart-line me-2 fs-5"></i>
+                                <strong>Fine Grid Periodogram Scan:</strong> Best Period $P_{{best}} = <strong>{scan_res['best_period']:.4f} days</strong>$
+                                (evaluated across {scan_res['accepted']:,} prior grid samples binned into {len(scan_res['periods'])} fine period steps).
+                            </div>
+                            <span class="badge bg-dark">Δχ²_min = 0.0</span>
+                        </div>
+                        """
+                    else:
+                        fine_scan_plot_html = "<div class='alert alert-warning my-3'><i class='fa-solid fa-triangle-exclamation me-2'></i>No accepted orbits found in the specified period range. Try expanding the min/max period window.</div>"
             except Exception as ex:
                 fine_scan_plot_html = f"<div class='alert alert-danger my-3'>Fine Grid Scan Error: {str(ex)}</div>"
 

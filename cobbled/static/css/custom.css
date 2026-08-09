@@ -1,10 +1,22 @@
-/* Custom Styling for COBBLED Navigation Menu with Multi-Level Visual Hierarchy */
+/* Main Navigation Menu Sidebar Background - Top Aligned */
+.main-sidebar,
+.main-sidebar .sidebar,
+.main_menu {
+    background-color: #0f172a !important;
+    padding-top: 0.5rem;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+    height: 100% !important;
+}
 
 /* =========================================================
-   GLARING VERIFICATION MARKER AT TOP OF MENU
+   GLARING VERIFICATION MARKER AT BOTTOM OF SIDEBAR
    ========================================================= */
-.main_menu::before {
-    content: "🔥 VERIFIED COBBLED v4.1 ACTIVE 🔥" !important;
+.main-sidebar::after,
+.main_menu::after {
+    content: "🔥 VERIFIED COBBLED v4.2 ACTIVE 🔥" !important;
     display: block !important;
     background: #ec4899 !important; /* Glaring Neon Pink / Magenta */
     color: #ffffff !important;
@@ -12,20 +24,16 @@
     font-size: 0.82rem !important;
     text-align: center !important;
     padding: 0.6rem 0.5rem !important;
-    margin: 0.4rem 0.6rem 0.8rem 0.6rem !important;
+    margin: auto 0.6rem 0.6rem 0.6rem !important;
     border-radius: 8px !important;
     letter-spacing: 0.08em !important;
     box-shadow: 0 0 12px rgba(236, 72, 153, 0.8) !important;
     border: 2px solid #f472b6 !important;
+    order: 99 !important;
 }
 
-/* Main Navigation Menu Sidebar Background */
-.main-sidebar,
-.main-sidebar .sidebar,
-.main_menu {
-    background-color: #0f172a !important;
-    padding-top: 0.5rem;
-    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+.main_menu::before {
+    display: none !important;
 }
 
 /* Reset details/summary browser default indicators */
