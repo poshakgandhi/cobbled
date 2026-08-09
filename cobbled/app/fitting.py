@@ -299,3 +299,78 @@ def get_fit_results(source, force_run=False, p_guess=None, k_guess=None, v0_gues
         _samples_cache[cache_key] = (samples, parameters)
 
     return samples, parameters
+
+
+def run_fine_grid_scan(source, p_min, p_max, num_samples=250000, user=None):
+    """
+    Executes a high-density fine grid rejection sampling over a custom period range [p_min, p_max] (days).
+    Returns fine-grid scan dictionary containing periods, ln_likes, delta_chi2, and best-fit parameters.
+    """
+    try:
+        df = load_rv_data(source, user=user)
+    except ValueError:
+        return None
+
+    if df.shape[0] < 3:
+        return None
+
+    t = Time(df["jd"].values, format="jd")
+    rv = df["radial_velocity"].values * u.km / u.s
+    rv_err = df["radial_velocity_error"].values * u.km / u.s
+    data = RVData(t, rv, rv_err)
+
+    p_min_val = max(0.1, float(p_min))
+    p_max_val = max(p_min_val + 0.05, float(p_max))
+
+    # Construct fine-grid prior over narrow period window
+    prior = JokerPrior.default(
+        P_min=p_min_val * u.day,
+        P_max=p_max_val * u.day,
+        sigma_K0=50.0 * u.km / u.s,
+        sigma_v=100.0 * u.km / u.s
+    )
+
+    joker = TheJoker(prior)
+    prior_samples = prior.sample(size=int(num_samples))
+    samples = joker.rejection_sample(data, prior_samples=prior_samples)
+
+    if len(samples) == 0:
+        return {
+            "p_min": p_min_val,
+            "p_max": p_max_val,
+            "accepted": 0,
+            "periods": [],
+            "ln_likes": [],
+            "delta_chi2": [],
+            "best_period": None,
+            "best_k": None,
+            "best_e": None,
+            "min_chi2": None,
+        }
+
+    ln_likes = samples.ln_unmarginalized_likelihood(data)
+    best_idx = np.argmax(ln_likes)
+    max_ll = float(ln_likes[best_idx])
+    delta_chi2 = -2.0 * (ln_likes - max_ll)
+
+    sort_idx = np.argsort(samples["P"])
+    sorted_periods = [float(val.value) if hasattr(val, "value") else float(val) for val in samples["P"][sort_idx]]
+    sorted_ln_likes = [float(ll) for ll in ln_likes[sort_idx]]
+    sorted_delta_chi2 = [float(dc) for dc in delta_chi2[sort_idx]]
+
+    best_period = float(samples["P"][best_idx].value) if hasattr(samples["P"][best_idx], "value") else float(samples["P"][best_idx])
+    best_k = float(samples["K"][best_idx].value) if hasattr(samples["K"][best_idx], "value") else float(samples["K"][best_idx])
+    best_e = float(samples["e"][best_idx].value) if hasattr(samples["e"][best_idx], "value") else float(samples["e"][best_idx])
+
+    return {
+        "p_min": p_min_val,
+        "p_max": p_max_val,
+        "accepted": len(samples),
+        "periods": sorted_periods,
+        "ln_likes": sorted_ln_likes,
+        "delta_chi2": sorted_delta_chi2,
+        "best_period": best_period,
+        "best_k": best_k,
+        "best_e": best_e,
+        "min_chi2": 0.0,
+    }

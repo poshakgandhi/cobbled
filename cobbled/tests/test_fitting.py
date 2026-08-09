@@ -61,3 +61,15 @@ class FittingTestCase(TestCase):
         samples, _ = get_fit_results(self.source, force_run=True)
         html_div = get_rv_plot(self.source, fit_samples=samples)
         self.assertIn("plotly", html_div)
+
+    def test_fine_grid_scan(self):
+        from app.fitting import run_fine_grid_scan
+        from app.plots.rv_curve import get_fine_grid_plot
+
+        scan_res = run_fine_grid_scan(self.source, p_min=5.0, p_max=15.0, num_samples=10000)
+        self.assertIsNotNone(scan_res)
+        self.assertIn("periods", scan_res)
+        self.assertIn("delta_chi2", scan_res)
+
+        html = get_fine_grid_plot(scan_res)
+        self.assertIsInstance(html, str)

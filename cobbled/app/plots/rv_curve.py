@@ -328,3 +328,108 @@ def get_rv_plot(source: Source, fit_samples=None, user=None):
     )
 
     return plot(fig, output_type="div")
+
+
+def get_fine_grid_plot(scan_results) -> str:
+    """
+    Generates a 2-panel Plotly interactive graph showing:
+    1. Posterior Log-Likelihood ln(L) vs Period (days)
+    2. Delta Chi2 (Δχ²) Profile vs Period (days) with 1σ and 3σ confidence lines
+    """
+    if not scan_results or not scan_results.get("periods"):
+        return "<div class='alert alert-warning my-3'><i class='fa-solid fa-triangle-exclamation me-2'></i>No accepted orbits found in the specified fine grid period window. Try broadening the period range or increasing the sample density.</div>"
+
+    from plotly.subplots import make_subplots
+
+    periods = scan_results["periods"]
+    ln_likes = scan_results["ln_likes"]
+    delta_chi2 = scan_results["delta_chi2"]
+
+    fig = make_subplots(
+        rows=2,
+        cols=1,
+        shared_xaxes=True,
+        vertical_spacing=0.10,
+        subplot_titles=(
+            "Posterior Log-Likelihood ln(L) vs Period (days)",
+            "Delta Chi-Squared (Δχ²) Profile & Confidence Bounds"
+        )
+    )
+
+    # Top Panel: Log-Likelihood
+    fig.add_trace(
+        go.Scatter(
+            x=periods,
+            y=ln_likes,
+            mode="lines+markers",
+            marker=dict(color="#3b82f6", size=6, opacity=0.8),
+            line=dict(color="#2563eb", width=1.5),
+            name="ln(L)",
+            hovertemplate="<b>Period:</b> %{x:.4f} days<br><b>ln(L):</b> %{y:.3f}<extra></extra>"
+        ),
+        row=1,
+        col=1
+    )
+
+    # Bottom Panel: Delta Chi2
+    fig.add_trace(
+        go.Scatter(
+            x=periods,
+            y=delta_chi2,
+            mode="lines+markers",
+            marker=dict(color="#ef4444", size=6, opacity=0.8),
+            line=dict(color="#dc2626", width=1.5),
+            name="Δχ²",
+            hovertemplate="<b>Period:</b> %{x:.4f} days<br><b>Δχ²:</b> %{y:.3f}<extra></extra>"
+        ),
+        row=2,
+        col=1
+    )
+
+    # 1-sigma and 3-sigma confidence lines
+    fig.add_hline(
+        y=1.0,
+        line_dash="dash",
+        line_color="#eab308",
+        annotation_text="1σ Confidence (Δχ² = 1.0)",
+        annotation_position="top right",
+        row=2,
+        col=1
+    )
+    fig.add_hline(
+        y=9.0,
+        line_dash="dash",
+        line_color="#f97316",
+        annotation_text="3σ Confidence (Δχ² = 9.0)",
+        annotation_position="top right",
+        row=2,
+        col=1
+    )
+
+    fig.update_layout(
+        height=520,
+        template="plotly_white",
+        margin=dict(l=60, r=40, t=40, b=50),
+        showlegend=False,
+        hovermode="closest"
+    )
+    fig.update_xaxes(
+        title_text="Orbital Period P (days)",
+        showgrid=True,
+        row=2,
+        col=1
+    )
+    fig.update_yaxes(
+        title_text="ln(L)",
+        showgrid=True,
+        row=1,
+        col=1
+    )
+    fig.update_yaxes(
+        title_text="Δχ²",
+        showgrid=True,
+        row=2,
+        col=1
+    )
+
+    return plot(fig, output_type="div", include_plotlyjs=False)
