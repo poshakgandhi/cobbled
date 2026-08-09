@@ -16,7 +16,7 @@
    ========================================================= */
 .main-sidebar::after,
 .main_menu::after {
-    content: "🔥 VERIFIED COBBLED v4.2 ACTIVE 🔥" !important;
+    content: "🔥 VERIFIED COBBLED v2.0 ACTIVE 🔥" !important;
     display: block !important;
     background: #ec4899 !important; /* Glaring Neon Pink / Magenta */
     color: #ffffff !important;
