@@ -110,15 +110,8 @@ def get_rv_plot(source: Source, fit_samples=None, user=None):
     # Plot fitted orbits if available
     if fit_samples:
         x_range = (-x_margin, data["jd"].max() - jd_min + x_margin)
-        x_grid = np.linspace(x_range[0], x_range[1], 500)
-        jd_grid = x_grid + jd_min
 
-        # Calculate next extrema for the best-fit model
-        from astropy.time import Time
-        t_now = Time.now().jd
-        t_last_obs = data["jd"].max()
-        
-        # Get period for threshold check
+        # Get period for threshold check and dynamic grid resolution
         if hasattr(fit_samples, 'get_orbit'):
             import astropy.units as u
             best_orbit = fit_samples.get_orbit(0)
@@ -127,6 +120,21 @@ def get_rv_plot(source: Source, fit_samples=None, user=None):
             best_fit = fit_samples[0]
             best_P = best_fit['P']
 
+        # Dynamic high-resolution time grid: at least 150 points per period (min 2,000, max 10,000 points)
+        total_span = x_range[1] - x_range[0]
+        if best_P and best_P > 0:
+            n_points = int(np.clip(np.ceil((total_span / best_P) * 150), 2000, 10000))
+        else:
+            n_points = 2000
+
+        x_grid = np.linspace(x_range[0], x_range[1], n_points)
+        jd_grid = x_grid + jd_min
+
+        # Calculate next extrema for the best-fit model
+        from astropy.time import Time
+        t_now = Time.now().jd
+        t_last_obs = data["jd"].max()
+        
         limit = max(365.0, 5 * best_P)
         is_far_ahead = (t_now - t_last_obs) > limit
 

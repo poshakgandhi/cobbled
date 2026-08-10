@@ -293,29 +293,29 @@ def render_fit_results_html(source, fit_run=False, p_guess=None, k_guess=None, v
     s_val = f'value="{s_guess}"' if s_guess is not None else 'value="0.5"'
 
     form_html = f"""
-    <div class="bg-light p-3 rounded mb-4 border">
-        <h6 class="fw-bold mb-3"><i class="fa-solid fa-sliders me-2"></i>Configure Fitting Priors / Initial Guesses</h6>
+    <div class="bg-light p-3 rounded mb-4 border border-secondary-subtle shadow-sm">
+        <h5 class="fw-bolder mb-3 text-dark"><i class="fa-solid fa-sliders me-2 text-primary"></i>Configure Fitting Priors / Initial Guesses</h5>
         <form method="get">
             <input type="hidden" name="fit" value="true">
             <div class="row g-3 mb-3">
                 <div class="col-md-2">
-                    <label class="form-label fw-bold small text-muted mb-1">Period Guess (d)</label>
+                    <label class="form-label fw-bold text-dark mb-1">Period Guess (d)</label>
                     <input type="number" step="any" min="0.1" name="p_guess" class="form-control form-control-sm" placeholder="e.g. 10.5" {p_val}>
                 </div>
                 <div class="col-md-2">
-                    <label class="form-label fw-bold small text-muted mb-1">Amplitude K (km/s)</label>
+                    <label class="form-label fw-bold text-dark mb-1">Amplitude K (km/s)</label>
                     <input type="number" step="any" min="0.1" name="k_guess" class="form-control form-control-sm" placeholder="e.g. 20.0" {k_val}>
                 </div>
                 <div class="col-md-2">
-                    <label class="form-label fw-bold small text-muted mb-1">Velocity v0 (km/s)</label>
+                    <label class="form-label fw-bold text-dark mb-1">Velocity v0 (km/s)</label>
                     <input type="number" step="any" name="v0_guess" class="form-control form-control-sm" placeholder="e.g. 5.0" {v0_val}>
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label fw-bold small text-muted mb-1">Eccentricity e</label>
+                    <label class="form-label fw-bold text-dark mb-1">Eccentricity e</label>
                     <input type="number" step="any" min="0" max="0.99" name="e_guess" class="form-control form-control-sm" placeholder="e.g. 0.20" {e_val}>
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label fw-bold small text-muted mb-1">Intrinsic Scatter s (km/s)</label>
+                    <label class="form-label fw-bold text-dark mb-1">Intrinsic Scatter s (km/s)</label>
                     <input type="number" step="any" min="0" name="s_guess" class="form-control form-control-sm" placeholder="e.g. 0.50" {s_val}>
                 </div>
             </div>
@@ -715,7 +715,17 @@ def render_observations_table_html(source, request) -> str:
         else:
             jd_str = "<span class='badge bg-danger text-light'>Missing Date</span>"
 
-        observer_email = obs.observer.user.email if (obs.observer and obs.observer.user) else "Unassigned"
+        if obs.observer and obs.observer.user:
+            u = obs.observer.user
+            if u.username and "@" not in u.username:
+                observer_name = u.username
+            elif u.email:
+                observer_name = u.email.split("@")[0]
+            else:
+                observer_name = u.username.split("@")[0]
+        else:
+            observer_name = "Unassigned"
+
         project_name = obs.project.name if obs.project else "Independent"
 
         can_edit = user and user.is_authenticated and (user.is_staff or is_linked_project_member(user, obs))
@@ -758,7 +768,7 @@ def render_observations_table_html(source, request) -> str:
             <td>{jd_str}</td>
             <td>{rv_str}</td>
             <td><code>{err_str}</code></td>
-            <td><span class="badge bg-secondary text-light px-2 py-1"><i class="fa-solid fa-user me-1"></i>{observer_email}</span>{tier_badge}</td>
+            <td><span class="badge bg-secondary text-light px-2 py-1"><i class="fa-solid fa-user me-1"></i>{observer_name}</span>{tier_badge}</td>
             <td><span class="badge bg-info text-dark px-2 py-1"><i class="fa-solid fa-folder me-1"></i>{project_name}</span></td>
             <td>{actions_html}</td>
         </tr>

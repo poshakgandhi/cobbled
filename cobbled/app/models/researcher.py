@@ -52,11 +52,19 @@ class Researcher(Model):
         """
         return f"/researcher/{self.pk}/"
 
+    def get_display_name(self) -> str:
+        name = self.user.get_full_name()
+        if not name or "@" in name:
+            name = self.user.username
+        if "@" in name:
+            name = name.split("@")[0]
+        return name
+
     def __str__(self) -> str:
-        return f"{self.user.get_full_name()}"
+        return self.get_display_name()
 
     def __repr__(self) -> str:
-        return f"{self.user.get_full_name()}"
+        return self.get_display_name()
 
 
 User = get_user_model()
