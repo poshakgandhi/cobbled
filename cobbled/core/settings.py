@@ -142,7 +142,7 @@ WSGI_APPLICATION: str = "core.wsgi.application"
 import os
 import shutil
 
-PERSISTENT_DIR_CONFIG = config("PERSISTENT_DATA_DIR", default="/data" if os.path.exists("/data") and os.access("/data", os.W_OK) else str(BASE_DIR))
+PERSISTENT_DIR_CONFIG = config("PERSISTENT_DATA_DIR", default="/data" if os.environ.get("SPACE_ID") and os.path.exists("/data") and os.access("/data", os.W_OK) else str(BASE_DIR))
 PERSISTENT_DIR: Path = Path(PERSISTENT_DIR_CONFIG)
 
 DATABASE_PATH: Path = Path(config("DATABASE_PATH", default=str(PERSISTENT_DIR / "db.sqlite3")))
